@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-change-in-production"
     
     # Database
-    DATABASE_URL: str = "mysql+pymysql://it_ops:secure_password@mysql:3306/it_operations"
+    DATABASE_URL: str = "mysql+pymysql://it_ops:secure_password@mysql:3306/it_operations?charset=utf8mb4&auth_plugin=caching_sha2_password"
     
     # Redis
     REDIS_URL: str = "redis://redis:6379/0"
