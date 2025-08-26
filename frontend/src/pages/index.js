@@ -88,7 +88,7 @@ function HomePage() {
         },
         body: JSON.stringify({
           prompt: report.llmPrompt,
-          context: report.eazybiResult, // Pass Eazybi result as context
+          context: String(report.eazybiResult), // Ensure context is a string
         }),
       });
       const llmData = await llmResponse.json();
