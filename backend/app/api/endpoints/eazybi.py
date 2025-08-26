@@ -33,9 +33,14 @@ async def get_eazybi_data():
             data = response.json()
 
             # Assuming the Eazybi API returns a list of results and we want the first one
-            if data and isinstance(data, list) and len(data) > 0:
-                # You might need to adjust this based on the actual structure of the Eazybi response
-                first_result = data[0]
+            # Correctly parse the Eazybi API response
+            if "query_results" in data and "values" in data["query_results"] and \
+               isinstance(data["query_results"]["values"], list) and \
+               len(data["query_results"]["values"]) > 0 and \
+               isinstance(data["query_results"]["values"][0], list) and \
+               len(data["query_results"]["values"][0]) > 0:
+                
+                first_result = data["query_results"]["values"][0][0]
                 return {"firstResult": first_result}
             else:
                 return {"firstResult": "No data found or unexpected data format."}
