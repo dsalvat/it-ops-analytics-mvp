@@ -3,12 +3,15 @@ from fastapi.responses import JSONResponse
 from app.core.config import settings
 import httpx
 import base64
+import json
+import os
 
 router = APIRouter()
 
+EAZYBI_CONFIG_PATH = "/app/app/core/eazybi_config.json"
+
 @router.get("/eazybi-data")
 async def get_eazybi_data():
-    eazybi_url = "https://aod.eazybi.com/accounts/59396/export/report/1075280.json"
     username = settings.EAZYBI_USERNAME
     password = settings.EAZYBI_PASSWORD
 
@@ -23,40 +26,60 @@ async def get_eazybi_data():
     encoded_auth_string = base64.b64encode(auth_string.encode("utf-8")).decode("utf-8")
     headers = {"Authorization": f"Basic {encoded_auth_string}"}
 
+    all_results = []
+
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(eazybi_url, headers=headers)
-            response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
-            data = response.json()
-
-            # Assuming the Eazybi API returns a list of results and we want the first one
-            data = response.json()
-
-            # Assuming the Eazybi API returns a list of results and we want the first one
-            # Correctly parse the Eazybi API response
-            if "query_results" in data and "values" in data["query_results"] and \
-               isinstance(data["query_results"]["values"], list) and \
-               len(data["query_results"]["values"]) > 0 and \
-               isinstance(data["query_results"]["values"][0], list) and \
-               len(data["query_results"]["values"][0]) > 0:
-                
-                first_result = data["query_results"]["values"][0][0]
-                return {"firstResult": first_result}
-            else:
-                return {"firstResult": "No data found or unexpected data format."}
-
-    except httpx.RequestError as exc:
+        with open(EAZYBI_CONFIG_PATH, "r") as f:
+            eazybi_reports_config = json.load(f)
+    except FileNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while requesting Eazybi API: {exc}"
+            detail=f"Eazybi configuration file not found at {EAZYBI_CONFIG_PATH}"
         )
-    except httpx.HTTPStatusError as exc:
-        raise HTTPException(
-            status_code=exc.response.status_code,
-            detail=f"Eazybi API returned an error: {exc.response.status_code} - {exc.response.text}"
-        )
-    except Exception as exc:
+    except json.JSONDecodeError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred: {exc}"
+            detail=f"Error decoding Eazybi configuration file at {EAZYBI_CONFIG_PATH}. Invalid JSON."
         )
+
+    async with httpx.AsyncClient() as client:
+        for report_config in eazybi_reports_config:
+            report_name = report_config.get("name", "Unknown Report")
+            report_id = report_config.get("report_id")
+
+            if not report_id:
+                all_results.append({"report_name": report_name, "error": "Missing report_id in configuration."})
+                continue
+
+            eazybi_url = f"{settings.EAZYBI_BASE_URL}/{report_id}.json"
+
+            try:
+                response = await client.get(eazybi_url, headers=headers)
+                response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
+                data = response.json()
+
+                # Correctly parse the Eazybi API response
+                if "query_results" in data and isinstance(data["query_results"], dict):
+                    
+                    report_data = data["query_results"]
+                    all_results.append({"report_name": report_name, "result": report_data})
+                else:
+                    all_results.append({"report_name": report_name, "result": "No query_results found or unexpected data format."})
+
+            except httpx.RequestError as exc:
+                all_results.append({
+                    "report_name": report_name,
+                    "error": f"An error occurred while requesting Eazybi API: {exc}"
+                })
+            except httpx.HTTPStatusError as exc:
+                all_results.append({
+                    "report_name": report_name,
+                    "error": f"Eazybi API returned an error: {exc.response.status_code} - {exc.response.text}"
+                })
+            except Exception as exc:
+                all_results.append({
+                    "report_name": report_name,
+                    "error": f"An unexpected error occurred: {exc}"
+                })
+    
+    return {"results": all_results}
