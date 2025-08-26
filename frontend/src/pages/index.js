@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react';
 
 function HomePage() {
   const [reportsData, setReportsData] = useState([]);
+  const [isFinalReportButtonEnabled, setIsFinalReportButtonEnabled] = useState(false);
+  const [finalReportResult, setFinalReportResult] = useState(null);
+  const [loadingFinalReport, setLoadingFinalReport] = useState(false);
+  const [errorFinalReport, setErrorFinalReport] = useState(null);
+
+  // Function to check if all LLM results are filled
+  const checkFinalReportButtonStatus = () => {
+    const allLlmResultsFilled = reportsData.every(report =>
+      report.llmResult !== null && report.llmResult !== undefined && report.llmResult !== '' && !report.loadingLlm
+    );
+    setIsFinalReportButtonEnabled(allLlmResultsFilled && reportsData.length > 0);
+  };
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -25,6 +37,50 @@ function HomePage() {
 
     fetchConfig();
   }, []); // Empty dependency array means this runs once on mount
+
+  // Effect to re-check button status whenever reportsData changes
+  useEffect(() => {
+    checkFinalReportButtonStatus();
+  }, [reportsData]);
+
+  const handleFinalReport = async () => {
+    setLoadingFinalReport(true);
+    setErrorFinalReport(null);
+    setFinalReportResult(null);
+
+    const allLlmResults = reportsData.map(report => ({
+      reportName: report.name,
+      llmResult: report.llmResult
+    }));
+
+    // You will provide the prompt for the final report here
+    const finalReportPrompt = "Summarize the following individual reports and provide overall recommendations:\n\n" +
+                             allLlmResults.map(item => `Report: ${item.reportName}\nAnalysis: ${item.llmResult}`).join('\n\n');
+
+    try {
+      const llmResponse = await fetch('http://localhost:8000/api/v1/llm/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: finalReportPrompt,
+          context: "", // Context can be empty or include other relevant info if needed
+        }),
+      });
+      const llmData = await llmResponse.json();
+
+      setFinalReportResult(llmData.response || llmData.detail || "No final LLM response.");
+      if (llmData.detail) {
+        setErrorFinalReport(llmData.detail);
+      }
+    } catch (error) {
+      console.error("Error calling LLM for final report:", error);
+      setErrorFinalReport(`Error generating final report: ${error.message}`);
+    } finally {
+      setLoadingFinalReport(false);
+    }
+  };
 
   const handleGetEazybiReport = async (index) => {
     const report = reportsData[index];
@@ -181,6 +237,26 @@ function HomePage() {
           ))}
         </tbody>
       </table>
+
+      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        <button
+          onClick={handleFinalReport}
+          disabled={!isFinalReportButtonEnabled || loadingFinalReport}
+        >
+          {loadingFinalReport ? 'Generating Final Report...' : 'Final Weekly Report'}
+        </button>
+
+        {finalReportResult && (
+          <div style={{ marginTop: '20px', textAlign: 'left', border: '1px solid #ddd', padding: '15px', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
+            <h3>Final Weekly Report Summary:</h3>
+            <pre>{JSON.stringify(finalReportResult, null, 2)}</pre>
+          </div>
+        )}
+
+        {errorFinalReport && (
+          <p style={{ color: 'red', marginTop: '10px' }}>Error: {errorFinalReport}</p>
+        )}
+      </div>
     </div>
   );
 }
