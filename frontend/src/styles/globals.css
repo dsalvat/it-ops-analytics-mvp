@@ -1,0 +1,185 @@
+/* General Body and Typography */
+html, body {
+  padding: 0;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f4f7f6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', sans-serif;
+  color: #2c3e50;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+p {
+  margin-bottom: 1em;
+}
+
+a {
+  color: #3498db;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Container for the main content */
+div { /* This targets the main div in index.js */
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Buttons */
+button {
+  font-family: 'Inter', sans-serif;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.3s ease;
+  margin-right: 10px; /* Spacing between buttons */
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Textarea */
+textarea {
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  margin-top: 5px;
+  margin-bottom: 10px;
+  resize: vertical; /* Allow vertical resizing */
+}
+
+/* Table Styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  overflow: hidden; /* Ensures rounded corners apply to content */
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+  background-color: #f8f8f8;
+  color: #555;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.9em;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Preformatted text for JSON output */
+pre {
+  background-color: #eee;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 5px;
+  white-space: pre-wrap; /* Ensures long lines wrap */
+  word-wrap: break-word; /* Breaks long words */
+  max-height: 200px; /* Limit height for long outputs */
+  overflow-y: auto; /* Add scroll for overflow */
+}
+
+/* Error messages */
+p[style*="color: red"] { /* Targeting the inline error style from index.js */
+  color: #e74c3c !important; /* Ensure it overrides */
+  font-weight: bold;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  tr {
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    border-radius: 8px;
+  }
+
+  td {
+    border: none;
+    border-bottom: 1px solid #eee;
+    position: relative;
+    padding-left: 50%;
+    text-align: right;
+  }
+
+  td:before {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: bold;
+  }
+
+  /*
+  Label the data
+  */
+  td:nth-of-type(1):before { content: "#"; }
+  td:nth-of-type(2):before { content: "Report Name"; }
+  td:nth-of-type(3):before { content: "Get Eazybi Report"; }
+  td:nth-of-type(4):before { content: "Eazybi Report Result"; }
+  td:nth-of-type(5):before { content: "LLM Prompt"; }
+  td:nth-of-type(6):before { content: "Call LLM"; }
+  td:nth-of-type(7):before { content: "LLM Result"; }
+
+  div {
+    margin: 10px;
+    padding: 15px;
+  }
+
+  button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}

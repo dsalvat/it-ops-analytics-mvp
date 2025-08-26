@@ -103,7 +103,7 @@ Tu respuesta debe generar un informe estructurado y claro, que sirva como un ent
 """
 
         # Combine prompt and context for OpenAI
-        full_prompt = f"Context: {request.context}\n\nPrompt: {request.prompt}"
+        full_prompt = f"Context: {prompt_analista_it_completo}. Haz la valoración del informe siguiente: {request.context}\n\nPrompt: {request.prompt}"
 
 
 
