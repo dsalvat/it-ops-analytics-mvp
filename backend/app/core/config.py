@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     
     # OpenAI
     OPENAI_API_KEY: Optional[str] = None
+
+    # Gemini
+    GEMINI_API_KEY: Optional[str] = None
     
     # EazyBI
     EAZYBI_BASE_URL: str = "https://aod.eazybi.com/accounts/59396/export/report"

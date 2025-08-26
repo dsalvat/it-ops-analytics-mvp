@@ -1,57 +1,29 @@
 import React, { useState, useEffect } from 'react';
 
-// Hardcode the list of reports.
-const eazybiReportsConfig = [
-  { "name": "SLA Overview (TTFR)", "report_id": "1075280" },
-  { "name": "SLA TTF - TEAMS", "report_id": "1095990" },
-  { "name": "Ticket Creation per Issue Type (Weekly - Chart)", "report_id": "858437" },
-  { "name": "Ticket Creation per Issue Type (Table)", "report_id": "1604290" },
-  { "name": "Ticket Creation vs Resolved (Weekly - chart)", "report_id": "858454" },
-  { "name": "Department IT - Incident Impact / Severity Weekly", "report_id": "1609156" },
-  { "name": "Ticket Creation vs Resolved (Last Week - Per Team)", "report_id": "1604297" },
-  { "name": "Service Desk - Average age report (table)", "report_id": "3413353" },
-  { "name": "Service Desk - Average age report", "report_id": "1086738" },
-  { "name": "Time Spent per Service - Weeks", "report_id": "1020308" },
-  { "name": "Time Spent per Project - Weeks", "report_id": "1020304" },
-  { "name": "Logged hours by Customer Category per week (chart)", "report_id": "859985" },
-  { "name": "Logged hours by Customer Category per week - Unresolved issues (chart)", "report_id": "1604329" },
-  { "name": "Time Spent per Customer Unit - Weeks (% Category)", "report_id": "3438163" },
-  { "name": "Time Spent per Customer Unit - Weeks ", "report_id": "1025891" },
-  { "name": "Time Spetn per Customer Unit - Weeks (Service Desk)", "report_id": "1604335" },
-  { "name": "Department IT - Average satisfaction and SLA met (weekly)", "report_id": "1470702" },
-  { "name": "Department IT - Average satisfaction and SLA met (yearly - team)", "report_id": "1471880" },
-  { "name": "Logger hours by team member - Weekly", "report_id": "1025957" },
-  { "name": "Version releases - Table - Last 4 weeks", "report_id": "1150054" },
-  { "name": "Resolution Ranking", "report_id": "1604365" },
-  { "name": "Time Spent per Project - Last Week", "report_id": "1665456" },
-  { "name": "Ticket Creation per Request Type - Previous Week (Table)", "report_id": "2592318" },
-  { "name": "Ticket Resolution per Issuet Type (Table)", "report_id": "2662868" },
-  { "name": "Level Resolution (Last WEek - Per Team)", "report_id": "3481850" },
-  { "name": "Last Week's Issues with Satisfaction Data", "report_id": "3657228" },
-  { "name": "SDIT issues wiwth running TTFR SLA", "report_id": "3657397" },
-  { "name": "Unresolved isues from SDIT not updated in over 21 days", "report_id": "3657439" },
-  { "name": "P1 and P2 incidents from SDIT", "report_id": "3657466" },
-  { "name": "Unresolved issues from SDIT with label 'coordinacio'", "report_id": "3659882" },
-  { "name": "SDIT issues resolved last week with coordinacio label", "report_id": "3659884" },
-  { "name": "Unresolved issues with more than 14 days in Testing status", "report_id": "3675904" },
-  { "name": "Unresolved issues from Service Desk Department IT with no updated in last 14 days", "report_id": "3675782" }
-];
-
 function HomePage() {
   const [reportsData, setReportsData] = useState([]);
 
   useEffect(() => {
-    // Initialize reportsData from eazybiReportsConfig on component mount
-    setReportsData(eazybiReportsConfig.map(report => ({
-      ...report,
-      eazybiResult: null,
-      llmPrompt: '',
-      llmResult: null,
-      loadingEazybi: false,
-      loadingLlm: false,
-      errorEazybi: null,
-      errorLlm: null,
-    })));
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/eazybi/config');
+        const config = await response.json();
+        setReportsData(config.map(report => ({
+          ...report,
+          eazybiResult: null,
+          llmPrompt: report.llm_analysis_call || '',
+          llmResult: null,
+          loadingEazybi: false,
+          loadingLlm: false,
+          errorEazybi: null,
+          errorLlm: null,
+        })));
+      } catch (error) {
+        console.error("Error fetching Eazybi config:", error);
+      }
+    };
+
+    fetchConfig();
   }, []); // Empty dependency array means this runs once on mount
 
   const handleGetEazybiReport = async (index) => {
@@ -181,6 +153,8 @@ function HomePage() {
               </td>
               <td>
                 <textarea
+                  id={report.name || `llmPrompt-${index}`}
+                  name={report.name || `llmPrompt-${index}`}
                   value={report.llmPrompt}
                   onChange={(e) => handleLLMPromptChange(index, e.target.value)}
                   placeholder="Ask LLM about this report..."

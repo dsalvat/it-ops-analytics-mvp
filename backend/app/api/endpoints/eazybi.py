@@ -10,6 +10,23 @@ router = APIRouter()
 
 EAZYBI_CONFIG_PATH = "/app/app/core/eazybi_config.json"
 
+@router.get("/config")
+async def get_eazybi_config():
+    try:
+        with open(EAZYBI_CONFIG_PATH, "r") as f:
+            eazybi_reports_config = json.load(f)
+        return JSONResponse(content=eazybi_reports_config)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Eazybi configuration file not found at {EAZYBI_CONFIG_PATH}"
+        )
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error decoding Eazybi configuration file at {EAZYBI_CONFIG_PATH}. Invalid JSON."
+        )
+
 @router.get("/eazybi-data")
 async def get_eazybi_data():
     username = settings.EAZYBI_USERNAME

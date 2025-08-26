@@ -1,134 +1,167 @@
 [
   {
     "name": "SLA Overview (TTFR)",
-    "report_id": "1075280"
+    "report_id": "1075280",
+    "llm_analysis_call": "Avalua el següent arxiu JSON que conté dades sobre l'SLA de l'equip de TI i proporciona recomanacions per a la millora contínua. El JSON conté el percentatge de compliment de l'SLA ('SLA Met') i el percentatge d'incompliment ('SLA Breach'). Si el compliment de l'SLA és inferior al 100%, enfoca la teva anàlisi en identificar possibles causes de l'incompliment (com ara sobrecàrrega, classificació de tiquets, o problemes de priorització) i proporciona accions concretes i aplicables per a l'equip de primer nivell (N1) de cara a la setmana següent. Incorpora qualsevol anàlisi que consideris de valor per a la millora del servei."
   },
   {
     "name": "SLA TTF - TEAMS",
-    "report_id": "1095990"
+    "report_id": "1095990",
+    "llm_analysis_call": ""
   },
   {
     "name": "Ticket Creation per Issue Type (Weekly - Chart)",
-    "report_id": "858437"
+    "report_id": "858437",
+    "llm_analysis_call": ""
   },
   {
     "name": "Ticket Creation per Issue Type (Table)",
-    "report_id": "1604290"
+    "report_id": "1604290",
+    "llm_analysis_call": ""
   },
   {
     "name": "Ticket Creation vs Resolved (Weekly - chart)",
-    "report_id": "858454"
+    "report_id": "858454",
+    "llm_analysis_call": ""
   },
   {
     "name": "Department IT - Incident Impact / Severity Weekly",
-    "report_id": "1609156"
+    "report_id": "1609156",
+    "llm_analysis_call": ""
   },
   {
     "name": "Ticket Creation vs Resolved (Last Week - Per Team)",
-    "report_id": "1604297"
+    "report_id": "1604297",
+    "llm_analysis_call": ""
   },
   {
     "name": "Service Desk - Average age report (table)",
-    "report_id": "3413353"
+    "report_id": "3413353",
+    "llm_analysis_call": ""
   },
   {
     "name": "Service Desk - Average age report",
-    "report_id": "1086738"
+    "report_id": "1086738",
+    "llm_analysis_call": ""
   },
   {
     "name": "Time Spent per Service - Weeks",
-    "report_id": "1020308"
+    "report_id": "1020308",
+    "llm_analysis_call": ""
   },
   {
     "name": "Time Spent per Project - Weeks",
-    "report_id": "1020304"
+    "report_id": "1020304",
+    "llm_analysis_call": ""
   },
   {
     "name": "Logged hours by Customer Category per week (chart)",
-    "report_id": "859985"
+    "report_id": "859985",
+    "llm_analysis_call": ""
   },
   {
     "name": "Logged hours by Customer Category per week - Unresolved issues (chart)",
-    "report_id": "1604329"
+    "report_id": "1604329",
+    "llm_analysis_call": ""
   },
   {
     "name": "Time Spent per Customer Unit - Weeks (% Category)",
-    "report_id": "3438163"
+    "report_id": "3438163",
+    "llm_analysis_call": ""
   },
   {
     "name": "Time Spent per Customer Unit - Weeks ",
-    "report_id": "1025891"
+    "report_id": "1025891",
+    "llm_analysis_call": ""
   },
   {
     "name": "Time Spetn per Customer Unit - Weeks (Service Desk)",
-    "report_id": "1604335"
+    "report_id": "1604335",
+    "llm_analysis_call": ""
   },
   {
     "name": "Department IT - Average satisfaction and SLA met (weekly)",
-    "report_id": "1470702"
+    "report_id": "1470702",
+    "llm_analysis_call": ""
   },
   {
     "name": "Department IT - Average satisfaction and SLA met (yearly - team)",
-    "report_id": "1471880"
+    "report_id": "1471880",
+    "llm_analysis_call": ""
   },
   {
     "name": "Logger hours by team member - Weekly",
-    "report_id": "1025957"
+    "report_id": "1025957",
+    "llm_analysis_call": ""
   },
   {
     "name": "Version releases - Table - Last 4 weeks",
-    "report_id": "1150054"
+    "report_id": "1150054",
+    "llm_analysis_call": ""
   },
   {
     "name": "Resolution Ranking",
-    "report_id": "1604365"
+    "report_id": "1604365",
+    "llm_analysis_call": ""
   },
   {
     "name": "Time Spent per Project - Last Week",
-    "report_id": "1665456"
+    "report_id": "1665456",
+    "llm_analysis_call": ""
   },
   {
     "name": "Ticket Creation per Request Type - Previous Week (Table)",
-    "report_id": "2592318"
+    "report_id": "2592318",
+    "llm_analysis_call": ""
   },
   {
     "name": "Ticket Resolution per Issuet Type (Table)",
-    "report_id": "2662868"
+    "report_id": "2662868",
+    "llm_analysis_call": ""
   },
   {
     "name": "Level Resolution (Last WEek - Per Team)",
-    "report_id": "3481850"
+    "report_id": "3481850",
+    "llm_analysis_call": ""
   },
   {
     "name": "Last Week's Issues with Satisfaction Data",
-    "report_id": "3657228"
+    "report_id": "3657228",
+    "llm_analysis_call": ""
   },
   {
     "name": "SDIT issues wiwth running TTFR SLA",
-    "report_id": "3657397"
+    "report_id": "3657397",
+    "llm_analysis_call": ""
   },
   {
     "name": "Unresolved isues from SDIT not updated in over 21 days",
-    "report_id": "3657439"
+    "report_id": "3657439",
+    "llm_analysis_call": ""
   },
   {
     "name": "P1 and P2 incidents from SDIT",
-    "report_id": "3657466"
+    "report_id": "3657466",
+    "llm_analysis_call": ""
   },
   {
     "name": "Unresolved issues from SDIT with label 'coordinacio'",
-    "report_id": "3659882"
+    "report_id": "3659882",
+    "llm_analysis_call": ""
   },
   {
     "name": "SDIT issues resolved last week with coordinacio label",
-    "report_id": "3659884"
+    "report_id": "3659884",
+    "llm_analysis_call": ""
   },
   {
     "name": "Unresolved issues with more than 14 days in Testing status",
-    "report_id": "3675904"
+    "report_id": "3675904",
+    "llm_analysis_call": ""
   },
   {
     "name": "Unresolved issues from Service Desk Department IT with no updated in last 14 days",
-    "report_id": "3675782"
+    "report_id": "3675782",
+    "llm_analysis_call": ""
   }
 ]
