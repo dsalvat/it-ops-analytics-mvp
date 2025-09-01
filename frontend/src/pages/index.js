@@ -6,6 +6,7 @@ function HomePage() {
   const [finalReportResult, setFinalReportResult] = useState(null);
   const [loadingFinalReport, setLoadingFinalReport] = useState(false);
   const [errorFinalReport, setErrorFinalReport] = useState(null);
+  const [isProcessingAll, setIsProcessingAll] = useState(false);
 
   // Function to check if all LLM results are filled
   const checkFinalReportButtonStatus = () => {
@@ -29,6 +30,8 @@ function HomePage() {
           loadingLlm: false,
           errorEazybi: null,
           errorLlm: null,
+          getReportTimestamp: null,
+          callLlmTimestamp: null,
         })));
       } catch (error) {
         console.error("Error fetching Eazybi config:", error);
@@ -92,14 +95,20 @@ function HomePage() {
       const response = await fetch(`http://localhost:8000/api/v1/eazybi/report/${report.report_id}`);
       const data = await response.json();
 
-      setReportsData(prevReports => prevReports.map((r, i) =>
-        i === index ? {
-          ...r,
-          eazybiResult: data.result || data.detail || "No data found or unexpected format.",
-          errorEazybi: data.detail ? data.detail : null,
-          loadingEazybi: false,
-        } : r
-      ));
+      if (response.ok) {
+        setReportsData(prevReports => prevReports.map((r, i) =>
+          i === index ? {
+            ...r,
+            eazybiResult: data.result || data.detail || "No data found or unexpected format.",
+            errorEazybi: data.detail ? data.detail : null,
+            loadingEazybi: false,
+            getReportTimestamp: new Date().toLocaleString(),
+          } : r
+        ));
+        return true;
+      } else {
+        throw new Error(data.detail || "Failed to fetch Eazybi report");
+      }
     } catch (error) {
       console.error(`Error fetching Eazybi report (${report.name}):`, error);
       setReportsData(prevReports => prevReports.map((r, i) =>
@@ -110,6 +119,7 @@ function HomePage() {
           loadingEazybi: false,
         } : r
       ));
+      return false;
     }
   };
 
@@ -129,14 +139,10 @@ function HomePage() {
       setReportsData(prevReports => prevReports.map((r, i) =>
         i === index ? { ...r, errorLlm: "Prompt cannot be empty.", loadingLlm: false } : r
       ));
-      return;
+      return false;
     }
 
-    // Placeholder for LLM API call
-    // In a real application, this would call a backend endpoint
-    // that integrates with an LLM (e.g., OpenAI, Gemini).
     try {
-      // Example: Sending Eazybi result and prompt to LLM backend
       const llmResponse = await fetch('http://localhost:8000/api/v1/llm/generate', {
         method: 'POST',
         headers: {
@@ -149,14 +155,20 @@ function HomePage() {
       });
       const llmData = await llmResponse.json();
 
-      setReportsData(prevReports => prevReports.map((r, i) =>
-        i === index ? {
-          ...r,
-          llmResult: llmData.response || llmData.detail || "No LLM response.",
-          errorLlm: llmData.detail ? llmData.detail : null,
-          loadingLlm: false,
-        } : r
-      ));
+      if (llmResponse.ok) {
+        setReportsData(prevReports => prevReports.map((r, i) =>
+          i === index ? {
+            ...r,
+            llmResult: llmData.response || llmData.detail || "No LLM response.",
+            errorLlm: llmData.detail ? llmData.detail : null,
+            loadingLlm: false,
+            callLlmTimestamp: new Date().toLocaleString(),
+          } : r
+        ));
+        return true;
+      } else {
+        throw new Error(llmData.detail || "Failed to call LLM");
+      }
     } catch (error) {
       console.error(`Error calling LLM for report (${report.name}):`, error);
       setReportsData(prevReports => prevReports.map((r, i) =>
@@ -167,13 +179,62 @@ function HomePage() {
           loadingLlm: false,
         } : r
       ));
+      return false;
     }
+  };
+
+  const executeWithRetry = async (action, retries = 2) => {
+    for (let i = 0; i <= retries; i++) {
+      const success = await action();
+      if (success) {
+        return true;
+      }
+      if (i < retries) {
+        console.log(`Action failed, retrying... (${i + 1}/${retries})`);
+      }
+    }
+    return false;
+  };
+
+  const handleGetAllReportsAndCallLLM = async () => {
+    setIsProcessingAll(true);
+
+    for (let i = 0; i < reportsData.length; i++) {
+      const reportSuccess = await executeWithRetry(() => handleGetEazybiReport(i));
+      if (!reportSuccess) {
+        alert(`Failed to get report for row ${i + 1} after multiple retries. Stopping process.`);
+        break;
+      }
+
+      const llmSuccess = await executeWithRetry(() => handleCallLLM(i));
+      if (!llmSuccess) {
+        alert(`Failed to call LLM for row ${i + 1} after multiple retries. Stopping process.`);
+        break;
+      }
+    }
+
+    setIsProcessingAll(false);
+  };
+
+  const handleGetReportAndCallLLM = async (index) => {
+    await handleGetEazybiReport(index);
+    await handleCallLLM(index);
   };
 
   return (
     <div>
       <h1>IT Operations Analytics Dashboard</h1>
       <p>Interact with Eazybi reports and generate insights using LLMs.</p>
+
+      <div style={{ margin: '20px 0' }}>
+        <button
+          onClick={handleGetAllReportsAndCallLLM}
+          disabled={isProcessingAll}
+          style={{ backgroundColor: 'red', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '5px' }}
+        >
+          {isProcessingAll ? 'Processing...' : 'Get All Reports and Call LLM'}
+        </button>
+      </div>
 
       <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
@@ -185,6 +246,7 @@ function HomePage() {
             <th>LLM Prompt</th>
             <th>Call LLM</th>
             <th>LLM Result</th>
+            <th>Get Report and Call LLM</th>
           </tr>
         </thead>
         <tbody>
@@ -195,10 +257,13 @@ function HomePage() {
               <td>
                 <button
                   onClick={() => handleGetEazybiReport(index)}
-                  disabled={report.loadingEazybi}
+                  disabled={report.loadingEazybi || isProcessingAll}
                 >
                   {report.loadingEazybi ? 'Loading...' : 'Get Report'}
                 </button>
+                {report.getReportTimestamp && (
+                  <p style={{ color: 'red' }}>Report retrieved at {report.getReportTimestamp}</p>
+                )}
               </td>
               <td>
                 {report.errorEazybi ? (
@@ -216,15 +281,19 @@ function HomePage() {
                   placeholder="Ask LLM about this report..."
                   rows="3"
                   cols="30"
+                  disabled={isProcessingAll}
                 />
               </td>
               <td>
                 <button
                   onClick={() => handleCallLLM(index)}
-                  disabled={report.loadingLlm || !report.eazybiResult}
+                  disabled={report.loadingLlm || !report.eazybiResult || isProcessingAll}
                 >
                   {report.loadingLlm ? 'Calling...' : 'Call LLM'}
                 </button>
+                {report.callLlmTimestamp && (
+                  <p style={{ color: 'red' }}>LLM called at {report.callLlmTimestamp}</p>
+                )}
               </td>
               <td>
                 {report.errorLlm ? (
@@ -232,6 +301,14 @@ function HomePage() {
                 ) : (
                   report.llmResult && <pre>{JSON.stringify(report.llmResult, null, 2)}</pre>
                 )}
+              </td>
+              <td>
+                <button
+                  onClick={() => handleGetReportAndCallLLM(index)}
+                  disabled={report.loadingEazybi || report.loadingLlm || isProcessingAll}
+                >
+                  Get Report and Call LLM
+                </button>
               </td>
             </tr>
           ))}
@@ -241,7 +318,7 @@ function HomePage() {
       <div style={{ marginTop: '20px', textAlign: 'center' }}>
         <button
           onClick={handleFinalReport}
-          disabled={!isFinalReportButtonEnabled || loadingFinalReport}
+          disabled={!isFinalReportButtonEnabled || loadingFinalReport || isProcessingAll}
         >
           {loadingFinalReport ? 'Generating Final Report...' : 'Final Weekly Report'}
         </button>
@@ -262,3 +339,4 @@ function HomePage() {
 }
 
 export default HomePage;
+
