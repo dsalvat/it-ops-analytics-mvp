@@ -7,6 +7,8 @@ function HomePage() {
   const [loadingFinalReport, setLoadingFinalReport] = useState(false);
   const [errorFinalReport, setErrorFinalReport] = useState(null);
   const [isProcessingAll, setIsProcessingAll] = useState(false);
+  const [llmModel, setLlmModel] = useState({ platform: 'OpenAI', model: 'gpt-3.5-turbo' });
+  const [language, setLanguage] = useState('English');
 
   // Function to check if all LLM results are filled
   const checkFinalReportButtonStatus = () => {
@@ -61,7 +63,7 @@ function HomePage() {
                              allLlmResults.map(item => `Report: ${item.reportName}\nAnalysis: ${item.llmResult}`).join('\n\n');
 
     try {
-      const llmResponse = await fetch('http://localhost:8000/api/v1/llm/generate', {
+      const llmResponse = await fetch(`http://localhost:8000/api/v1/llm/generate?platform=${llmModel.platform}&model=${llmModel.model}&language=${language}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +145,7 @@ function HomePage() {
     }
 
     try {
-      const llmResponse = await fetch('http://localhost:8000/api/v1/llm/generate', {
+      const llmResponse = await fetch(`http://localhost:8000/api/v1/llm/generate?platform=${llmModel.platform}&model=${llmModel.model}&language=${language}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -234,6 +236,27 @@ function HomePage() {
         >
           {isProcessingAll ? 'Processing...' : 'Get All Reports and Call LLM'}
         </button>
+        <select 
+          value={JSON.stringify(llmModel)} 
+          onChange={(e) => setLlmModel(JSON.parse(e.target.value))} 
+          style={{ marginLeft: '10px', padding: '10px' }}
+        >
+          <optgroup label="OpenAI">
+            <option value={JSON.stringify({ platform: 'OpenAI', model: 'gpt-4o' })}>gpt-4o</option>
+            <option value={JSON.stringify({ platform: 'OpenAI', model: 'gpt-4-turbo' })}>gpt-4-turbo</option>
+            <option value={JSON.stringify({ platform: 'OpenAI', model: 'gpt-3.5-turbo' })}>gpt-3.5-turbo</option>
+          </optgroup>
+          <optgroup label="Gemini">
+            <option value={JSON.stringify({ platform: 'Gemini', model: 'gemini-1.5-pro-latest' })}>gemini-1.5-pro-latest</option>
+            <option value={JSON.stringify({ platform: 'Gemini', model: 'gemini-1.5-flash-latest' })}>gemini-1.5-flash-latest</option>
+            <option value={JSON.stringify({ platform: 'Gemini', model: 'gemini-pro' })}>gemini-pro</option>
+          </optgroup>
+        </select>
+        <select value={language} onChange={(e) => setLanguage(e.target.value)} style={{ marginLeft: '10px', padding: '10px' }}>
+          <option value="English">English</option>
+          <option value="Català">Català</option>
+          <option value="Castellano">Castellano</option>
+        </select>
       </div>
 
       <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>

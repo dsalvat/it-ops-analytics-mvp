@@ -2,166 +2,166 @@
   {
     "name": "SLA Overview (TTFR)",
     "report_id": "1075280",
-    "llm_analysis_call": "Avalua el següent arxiu JSON que conté dades sobre l'SLA de l'equip de TI i proporciona recomanacions per a la millora contínua. El JSON conté el percentatge de compliment de l'SLA ('SLA Met') i el percentatge d'incompliment ('SLA Breach'). Si el compliment de l'SLA és inferior al 100%, enfoca la teva anàlisi en identificar possibles causes de l'incompliment (com ara sobrecàrrega, classificació de tiquets, o problemes de priorització) i proporciona accions concretes i aplicables per a l'equip de primer nivell (N1) de cara a la setmana següent. Incorpora qualsevol anàlisi que consideris de valor per a la millora del servei."
+    "llm_analysis_call": "**Rol**: Analista SLA/Performance de operaciones IT. **Tarea**: Evalúa el cumplimiento del SLA \"Time to First Response\" en el dataset. **SLA Reference**: P1=1h, P2=2h, P3=4h, P4=12h, Service Request P1/P2=8h, P3=24h, P4=48h, Other=96h. **Enfoque**: 1) % compliance global y por equipo, 2) Breaches analysis por severidad, 3) Tiempo promedio por prioridad, 4) Worst performers identification. **Output**: SLA scorecard, compliance %, root cause analysis breaches, improvement plan. "
   },
   {
     "name": "SLA TTF - TEAMS",
     "report_id": "1095990",
-    "llm_analysis_call": "Avalua el json, tenint en compte la tendència i els equips. Identifica si els equips, i quins equips, estan complint l'SLA, i els que no ho estan fent, per treballar equip per equip."
+    "llm_analysis_call": "**Rol**: Analista SLA/Performance de operaciones IT. **Tarea**: Evalúa el cumplimiento del SLA \"Time to First Response\" en el dataset. **SLA Reference**: P1=1h, P2=2h, P3=4h, P4=12h, Service Request P1/P2=8h, P3=24h, P4=48h, Other=96h. **Enfoque**: 1) % compliance global y por equipo, 2) Breaches analysis por severidad, 3) Tiempo promedio por prioridad, 4) Worst performers identification. **Output**: SLA scorecard, compliance %, root cause analysis breaches, improvement plan. "
   },
   {
     "name": "Ticket Creation per Issue Type (Weekly - Chart)",
     "report_id": "858437",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Service Portfolio y Demand Management. **Tarea**: Clasifica y analiza tickets por tipo de servicio. **Enfoque**: 1) Service type distribution, 2) Demand patterns per type, 3) Resolution complexity per type, 4) Resource requirements analysis, 5) Service optimization opportunities. **Output**: Service portfolio dashboard, demand forecast, complexity analysis, service improvement roadmap. "
   },
   {
     "name": "Ticket Creation per Issue Type (Table)",
     "report_id": "1604290",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Service Portfolio y Demand Management. **Tarea**: Clasifica y analiza tickets por tipo de servicio. **Enfoque**: 1) Service type distribution, 2) Demand patterns per type, 3) Resolution complexity per type, 4) Resource requirements analysis, 5) Service optimization opportunities. **Output**: Service portfolio dashboard, demand forecast, complexity analysis, service improvement roadmap. "
   },
   {
     "name": "Ticket Creation vs Resolved (Weekly - chart)",
     "report_id": "858454",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista IT con foco en tendencias operacionales. **Tarea**: Analiza la tendencia de tickets creados vs resueltos en el dataset proporcionat. **Enfoque**: 1) Comparativa volúmenes creados vs resueltos, 2) Backlog growth/reduction, 3) Seasonal patterns, 4) Distribución por equipo IT, 5) Identificación cuellos de botella. **KPIs**: Ratio resolución, backlog net change, velocity trends. **Output**: Análisis tendencial con gráfico conceptual, identificación patterns, y 3 acciones correctivas priorizadas. "
   },
   {
     "name": "Department IT - Incident Impact / Severity Weekly",
     "report_id": "1609156",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Risk Management y Priorización IT. **Tarea**: Evalúa la distribución de tickets por prioridad usando matriz MoSCoW. **Matrix**: P1=MUST(crítica), P2=SHOULD(alta), P3=COULD(media), P4=WOULD(baja), P5=WON'T(mínima). **Enfoque**: 1) Priority distribution analysis, 2) Escalation patterns, 3) SLA compliance per priority, 4) Business impact assessment. **Output**: Priority matrix dashboard, escalation trends, SLA performance per priority, business impact analysis. "
   },
   {
     "name": "Ticket Creation vs Resolved (Last Week - Per Team)",
     "report_id": "1604297",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Performance por Equipos IT. **Tarea**: Evalúa performance de los 9 equipos IT: Ciberseguretat, Projectes, SAP, PoS, Data, Integracions, Mitjans de Pagament, Sistemes, Departament IT. **Enfoque**: 1) Volume handled per team, 2) Resolution efficiency, 3) SLA compliance per team, 4) Specialization analysis, 5) Cross-team collaboration patterns. **Output**: Team performance scorecard, efficiency comparison, specialization matrix, collaboration opportunities. "
   },
   {
     "name": "Service Desk - Average age report (table)",
     "report_id": "3413353",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de SLA Performance y Service Quality. **Tarea**: Mide tiempos de resolución segmentados por prioridad de tickets. **SLA Targets**: P1<1h, P2<2h, P3<4h, P4<12h según tipo. **Enfoque**: 1) Average resolution time per priority, 2) SLA compliance rates, 3) Distribution analysis, 4) Outliers identification, 5) Performance benchmarking. **Output**: Resolution time dashboard, SLA compliance scorecard, performance improvement targets, outlier analysis. "
   },
   {
     "name": "Service Desk - Average age report",
     "report_id": "1086738",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de SLA Performance y Service Quality. **Tarea**: Mide tiempos de resolución segmentados por prioridad de tickets. **SLA Targets**: P1<1h, P2<2h, P3<4h, P4<12h según tipo. **Enfoque**: 1) Average resolution time per priority, 2) SLA compliance rates, 3) Distribution analysis, 4) Outliers identification, 5) Performance benchmarking. **Output**: Resolution time dashboard, SLA compliance scorecard, performance improvement targets, outlier analysis. "
   },
   {
     "name": "Time Spent per Service - Weeks",
     "report_id": "1020308",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Project Economics y Resource Utilization. **Tarea**: Evalúa la inversión de tiempo por proyecto/iniciativa. **Enfoque**: 1) Time investment per project, 2) Project ROI analysis, 3) Resource allocation efficiency, 4) Project prioritization insights, 5) Budget vs actual time analysis. **Output**: Project time dashboard, ROI analysis, resource allocation optimization, project portfolio recommendations. "
   },
   {
     "name": "Time Spent per Project - Weeks",
     "report_id": "1020304",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Project Economics y Resource Utilization. **Tarea**: Evalúa la inversión de tiempo por proyecto/iniciativa. **Enfoque**: 1) Time investment per project, 2) Project ROI analysis, 3) Resource allocation efficiency, 4) Project prioritization insights, 5) Budget vs actual time analysis. **Output**: Project time dashboard, ROI analysis, resource allocation optimization, project portfolio recommendations. "
   },
   {
     "name": "Logged hours by Customer Category per week (chart)",
     "report_id": "859985",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Productivity y Time Management. **Tarea**: Analiza el time tracking individual de cada miembro del equipo. **Enfoque**: 1) Hours worked per person, 2) Productivity metrics, 3) Time allocation patterns, 4) Efficiency comparison, 5) Overwork/underwork identification. **Output**: Productivity dashboard, time allocation analysis, efficiency benchmarks, work-life balance alerts, optimization recommendations. "
   },
   {
     "name": "Logged hours by Customer Category per week - Unresolved issues (chart)",
     "report_id": "1604329",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Productivity y Time Management. **Tarea**: Analiza el time tracking individual de cada miembro del equipo. **Enfoque**: 1) Hours worked per person, 2) Productivity metrics, 3) Time allocation patterns, 4) Efficiency comparison, 5) Overwork/underwork identification. **Output**: Productivity dashboard, time allocation analysis, efficiency benchmarks, work-life balance alerts, optimization recommendations. "
   },
   {
     "name": "Time Spent per Customer Unit - Weeks (% Category)",
     "report_id": "3438163",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Productivity y Time Management. **Tarea**: Analiza el time tracking individual de cada miembro del equipo. **Enfoque**: 1) Hours worked per person, 2) Productivity metrics, 3) Time allocation patterns, 4) Efficiency comparison, 5) Overwork/underwork identification. **Output**: Productivity dashboard, time allocation analysis, efficiency benchmarks, work-life balance alerts, optimization recommendations. "
   },
   {
     "name": "Time Spent per Customer Unit - Weeks ",
     "report_id": "1025891",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Productivity y Time Management. **Tarea**: Analiza el time tracking individual de cada miembro del equipo. **Enfoque**: 1) Hours worked per person, 2) Productivity metrics, 3) Time allocation patterns, 4) Efficiency comparison, 5) Overwork/underwork identification. **Output**: Productivity dashboard, time allocation analysis, efficiency benchmarks, work-life balance alerts, optimization recommendations. "
   },
   {
     "name": "Time Spetn per Customer Unit - Weeks (Service Desk)",
     "report_id": "1604335",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Productivity y Time Management. **Tarea**: Analiza el time tracking individual de cada miembro del equipo. **Enfoque**: 1) Hours worked per person, 2) Productivity metrics, 3) Time allocation patterns, 4) Efficiency comparison, 5) Overwork/underwork identification. **Output**: Productivity dashboard, time allocation analysis, efficiency benchmarks, work-life balance alerts, optimization recommendations. "
   },
   {
     "name": "Department IT - Average satisfaction and SLA met (weekly)",
     "report_id": "1470702",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Calidad del Servicio IT. **Tarea**: Analiza las puntuaciones de satisfacción del cliente en el dataset. **Objetivo**: Satisfacción ≥4.7/5 y ≥10% surveys completed. **Enfoque**: 1) Score promedio general y por equipo, 2) % surveys completed, 3) Distribución ratings, 4) Correlation satisfaction vs resolution time, 5) Outliers analysis. **Output**: Quality dashboard, satisfaction trends, equipos con mejor/peor performance, action items para improvement. "
   },
   {
     "name": "Department IT - Average satisfaction and SLA met (yearly - team)",
     "report_id": "1471880",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Service Quality y Customer Experience. **Tarea**: Evalúa la satisfacción del cliente segmentada por equipo IT. **Target**: ≥4.7/5 average, ≥10% response rate. **Enfoque**: 1) Satisfaction scores per team, 2) Response rate analysis, 3) Best practices identification, 4) Improvement opportunities, 5) Customer experience optimization. **Output**: Team satisfaction scorecard, best practices guide, improvement action plans, customer experience insights. "
   },
   {
     "name": "Logger hours by team member - Weekly",
     "report_id": "1025957",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Productivity y Time Management. **Tarea**: Analiza el time tracking individual de cada miembro del equipo. **Enfoque**: 1) Hours worked per person, 2) Productivity metrics, 3) Time allocation patterns, 4) Efficiency comparison, 5) Overwork/underwork identification. **Output**: Productivity dashboard, time allocation analysis, efficiency benchmarks, work-life balance alerts, optimization recommendations. "
   },
   {
     "name": "Version releases - Table - Last 4 weeks",
     "report_id": "1150054",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Delivery Performance y Release Management. **Tarea**: Analiza las releases/deployments recientes por equipo. **Enfoque**: 1) Release frequency per team, 2) Delivery velocity, 3) Release success rates, 4) Team productivity comparison, 5) Continuous improvement opportunities. **Output**: Release dashboard, velocity metrics, team comparison, deployment efficiency recommendations. "
   },
   {
     "name": "Resolution Ranking",
     "report_id": "1604365",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Individual Performance y Knowledge Management. **Tarea**: Identifica y analiza los top performers en resolución de tickets. **Enfoque**: 1) Resolution volume leaders, 2) Quality vs quantity analysis, 3) Specialization areas, 4) Knowledge sharing opportunities, 5) Recognition y development plans. **Output**: Top performer recognition, specialization matrix, knowledge transfer plan, mentoring opportunities. "
   },
   {
     "name": "Time Spent per Project - Last Week",
     "report_id": "1665456",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Project Economics y Resource Utilization. **Tarea**: Evalúa la inversión de tiempo por proyecto/iniciativa. **Enfoque**: 1) Time investment per project, 2) Project ROI analysis, 3) Resource allocation efficiency, 4) Project prioritization insights, 5) Budget vs actual time analysis. **Output**: Project time dashboard, ROI analysis, resource allocation optimization, project portfolio recommendations. "
   },
   {
     "name": "Ticket Creation per Request Type - Previous Week (Table)",
     "report_id": "2592318",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Eres un Analista de Operaciones IT de una cadena de supermercados (148 tiendas). **Tarea**: Analiza los tickets creados esta semana en el siguiente dataset JSON. **Enfoque**: 1) Volumen total y distribución por día, 2) Distribución por equipo IT (PoS, SAP, Integraciones, etc.), 3) Tipos de issue más frecuentes, 4) Prioridades P1-P5, 5) Tendencias vs semanas anteriores si aplicable. **Output**: Resumen ejecutivo con métricas clave, distribución gráfica conceptual, y 3 insights operacionales principales. "
   },
   {
-    "name": "Ticket Resolution per Issuet Type (Table)",
+    "name": "Ticket Resolution per Issue Type (Table)",
     "report_id": "2662868",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Operaciones IT especializado en productividad departamental. **Tarea**: Analiza los tickets resueltos esta semana del siguiente dataset. **Enfoque**: 1) Volumen resoluciones por día y equipo, 2) Tiempo promedio de resolución por tipo/prioridad, 3) Ratio creados vs resueltos, 4) Performance por assignee, 5) Compliance SLA. **Métricas clave**: Total resueltos, tiempo promedio resolución, top performers, bottlenecks identificados. **Output**: Dashboard conceptual con KPIs principales y recomendaciones actionables. "
   },
   {
-    "name": "Level Resolution (Last WEek - Per Team)",
+    "name": "Level Resolution (Last Week - Per Team)",
     "report_id": "3481850",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Escalation Management y Quality Control. **Tarea**: Examina los tickets escalados para identificar patterns y root causes. **Enfoque**: 1) Escalation volume y rates, 2) Root cause analysis, 3) Escalation triggers, 4) Level 1 vs Level 2 patterns, 5) Prevention strategies. **Output**: Escalation analytics, root cause report, prevention action plan, L1/L2 optimization recommendations. "
   },
   {
     "name": "Last Week's Issues with Satisfaction Data",
     "report_id": "3657228",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Calidad del Servicio IT. **Tarea**: Analiza las puntuaciones de satisfacción del cliente en el dataset. **Objetivo**: Satisfacción ≥4.7/5 y ≥10% surveys completed. **Enfoque**: 1) Score promedio general y por equipo, 2) % surveys completed, 3) Distribución ratings, 4) Correlation satisfaction vs resolution time, 5) Outliers analysis. **Output**: Quality dashboard, satisfaction trends, equipos con mejor/peor performance, action items para improvement. "
   },
   {
-    "name": "SDIT issues wiwth running TTFR SLA",
+    "name": "SDIT issues with running TTFR SLA",
     "report_id": "3657397",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Real-time SLA Monitoring y Performance. **Tarea**: Monitorea tickets con SLA TTFR (Time to First Response) actualmente corriendo. **SLA Matrix**: P1=1h, P2=2h, P3=4h, P4=12h. **Enfoque**: 1) Current TTFR exposure, 2) Breach risk assessment, 3) Immediate action requirements, 4) Resource reallocation needs, 5) Preventive measures. **Output**: Real-time SLA dashboard, breach risk alerts, immediate action plan, resource mobilization recommendations. "
   },
   {
     "name": "Unresolved isues from SDIT not updated in over 21 days",
     "report_id": "3657439",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Backlog Management y Technical Debt. **Tarea**: Identifica y prioriza issues sin resolver >21 días. **Enfoque**: 1) Age distribution analysis, 2) Business impact assessment, 3) Root cause identification, 4) Cleanup vs acceleration decisions, 5) Preventive measures. **Output**: Backlog health report, cleanup recommendations, acceleration priorities, prevention strategy. "
   },
   {
     "name": "P1 and P2 incidents from SDIT",
     "report_id": "3657466",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Crisis Management y High Priority Response. **Tarea**: Analiza incidents P1-MUST y P2-SHOULD para evaluar crisis management. **Enfoque**: 1) Critical incident volume, 2) Response time performance, 3) Resolution efficiency, 4) Business impact mitigation, 5) Improvement opportunities. **Output**: Crisis management scorecard, response performance metrics, resolution efficiency analysis, improvement action plan. "
   },
   {
     "name": "Unresolved issues from SDIT with label 'coordinacio'",
     "report_id": "3659882",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Cross-functional Coordination y Collaboration. **Tarea**: Evalúa issues etiquetados como 'coordinación' para medir colaboración interdepartamental. **Enfoque**: 1) Coordination issue volume, 2) Resolution patterns, 3) Collaboration effectiveness, 4) Bottleneck identification, 5) Process optimization. **Output**: Coordination effectiveness report, collaboration metrics, process improvement recommendations. "
   },
   {
     "name": "SDIT issues resolved last week with coordinacio label",
     "report_id": "3659884",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de Coordination Efficiency y Process Success. **Tarea**: Analiza issues de coordinación resueltas para evaluar collaboration success patterns. **Enfoque**: 1) Resolution success rate, 2) Time to coordination, 3) Collaboration patterns, 4) Success factors identification, 5) Best practices extraction. **Output**: Coordination success analysis, best practices guide, collaboration optimization recommendations. "
   },
   {
     "name": "Unresolved issues with more than 14 days in Testing status",
     "report_id": "3675904",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de QA Process y Testing Efficiency. **Tarea**: Identifica bottlenecks en proceso Testing/QA con issues >14 días estancados. **Enfoque**: 1) Testing bottleneck identification, 2) QA process efficiency, 3) Resource constraints analysis, 4) Process improvement opportunities, 5) Accelerated testing strategies. **Output**: QA bottleneck report, process efficiency metrics, resource needs assessment, acceleration action plan. "
   },
   {
     "name": "Unresolved issues from Service Desk Department IT with no updated in last 14 days",
     "report_id": "3675782",
-    "llm_analysis_call": "Avalua el json adjunt i identifica punts de millora, tant a nivell global com per cada un dels equips"
+    "llm_analysis_call": "**Rol**: Analista de SDIT System Health y Maintenance. **Tarea**: Identifica tickets SDIT sin actualización >14 días para evaluar system maintenance. **Enfoque**: 1) Stagnation pattern analysis, 2) Assignee workload assessment, 3) Process breakdown identification, 4) Revival vs cleanup decisions, 5) Prevention strategies. **Output**: SDIT health report, stagnation analysis, revival action plan, process improvement recommendations. "
   }
 ]
