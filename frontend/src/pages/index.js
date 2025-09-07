@@ -7,8 +7,9 @@ function HomePage() {
   const [loadingFinalReport, setLoadingFinalReport] = useState(false);
   const [errorFinalReport, setErrorFinalReport] = useState(null);
   const [isProcessingAll, setIsProcessingAll] = useState(false);
-  const [llmModel, setLlmModel] = useState({ platform: 'OpenAI', model: 'gpt-3.5-turbo' });
-  const [language, setLanguage] = useState('English');
+  const [llmModel, setLlmModel] = useState({ platform: 'Gemini', model: 'gemini-1.5-flash-latest' });
+  const [language, setLanguage] = useState('Català');
+  const [isStopping, setIsStopping] = useState(false);
 
   // Function to check if all LLM results are filled
   const checkFinalReportButtonStatus = () => {
@@ -34,6 +35,7 @@ function HomePage() {
           errorLlm: null,
           getReportTimestamp: null,
           callLlmTimestamp: null,
+          stopping: false,
         })));
       } catch (error) {
         console.error("Error fetching Eazybi config:", error);
@@ -55,12 +57,15 @@ function HomePage() {
 
     const allLlmResults = reportsData.map(report => ({
       reportName: report.name,
-      llmResult: report.llmResult
+      llmResult: report.llmResult,
+      eazybiResult: report.eazybiResult
     }));
 
     // You will provide the prompt for the final report here
     const finalReportPrompt = "Summarize the following individual reports and provide overall recommendations:\n\n" +
                              allLlmResults.map(item => `Report: ${item.reportName}\nAnalysis: ${item.llmResult}`).join('\n\n');
+
+    const finalReportContext = allLlmResults.map(item => `Report: ${item.reportName}\nData: ${JSON.stringify(item.eazybiResult)}`).join('\n\n');
 
     try {
       const llmResponse = await fetch(`http://localhost:8000/api/v1/llm/generate?platform=${llmModel.platform}&model=${llmModel.model}&language=${language}`, {
@@ -70,7 +75,7 @@ function HomePage() {
         },
         body: JSON.stringify({
           prompt: finalReportPrompt,
-          context: "", // Context can be empty or include other relevant info if needed
+          context: finalReportContext,
         }),
       });
       const llmData = await llmResponse.json();
@@ -164,7 +169,7 @@ function HomePage() {
             llmResult: llmData.response || llmData.detail || "No LLM response.",
             errorLlm: llmData.detail ? llmData.detail : null,
             loadingLlm: false,
-            callLlmTimestamp: new Date().toLocaleString(),
+            callLlmTimestamp: `${new Date().toLocaleString()} (Model: ${llmModel.model})`,
           } : r
         ));
         return true;
@@ -200,18 +205,31 @@ function HomePage() {
 
   const handleGetAllReportsAndCallLLM = async () => {
     setIsProcessingAll(true);
+    setIsStopping(false);
 
     for (let i = 0; i < reportsData.length; i++) {
+      if (isStopping) {
+        setIsStopping(false);
+        break;
+      }
+
       const reportSuccess = await executeWithRetry(() => handleGetEazybiReport(i));
       if (!reportSuccess) {
-        alert(`Failed to get report for row ${i + 1} after multiple retries. Stopping process.`);
+        setReportsData(prevReports => prevReports.map((r, idx) =>
+          idx === i ? { ...r, eazybiResult: "Report unavailable", errorEazybi: "Report unavailable after multiple retries." } : r
+        ));
+      }
+
+      if (isStopping) {
+        setIsStopping(false);
         break;
       }
 
       const llmSuccess = await executeWithRetry(() => handleCallLLM(i));
       if (!llmSuccess) {
-        alert(`Failed to call LLM for row ${i + 1} after multiple retries. Stopping process.`);
-        break;
+        setReportsData(prevReports => prevReports.map((r, idx) =>
+          idx === i ? { ...r, llmResult: "LLM call failed", errorLlm: "LLM call failed after multiple retries." } : r
+        ));
       }
     }
 
@@ -219,8 +237,22 @@ function HomePage() {
   };
 
   const handleGetReportAndCallLLM = async (index) => {
-    await handleGetEazybiReport(index);
-    await handleCallLLM(index);
+    setReportsData(prevReports => prevReports.map((r, i) =>
+      i === index ? { ...r, stopping: false } : r
+    ));
+
+    const reportSuccess = await handleGetEazybiReport(index);
+
+    if (reportsData[index].stopping) {
+      setReportsData(prevReports => prevReports.map((r, i) =>
+        i === index ? { ...r, stopping: false, loadingEazybi: false, loadingLlm: false } : r
+      ));
+      return;
+    }
+
+    if (reportSuccess) {
+      await handleCallLLM(index);
+    }
   };
 
   return (
@@ -235,6 +267,13 @@ function HomePage() {
           style={{ backgroundColor: 'red', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '5px' }}
         >
           {isProcessingAll ? 'Processing...' : 'Get All Reports and Call LLM'}
+        </button>
+        <button
+          onClick={() => setIsStopping(true)}
+          disabled={!isProcessingAll}
+          style={{ marginLeft: '10px', padding: '10px' }}
+        >
+          Stop
         </button>
         <select 
           value={JSON.stringify(llmModel)} 
@@ -331,6 +370,13 @@ function HomePage() {
                   disabled={report.loadingEazybi || report.loadingLlm || isProcessingAll}
                 >
                   Get Report and Call LLM
+                </button>
+                <button
+                  onClick={() => setReportsData(prevReports => prevReports.map((r, i) => i === index ? { ...r, stopping: true } : r))}
+                  disabled={!report.loadingEazybi && !report.loadingLlm}
+                  style={{ marginLeft: '10px' }}
+                >
+                  Stop
                 </button>
               </td>
             </tr>

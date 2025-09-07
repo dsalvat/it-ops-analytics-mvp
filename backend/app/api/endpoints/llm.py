@@ -22,7 +22,7 @@ async def generate_openai(request: LLMRequest, model: str, language: str):
     try:
         client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
         
-        prompt_analista_it_completo = f"""
+        prompt_analista_it_completo = f'''
 ### **Prompt para el Modelo de Lenguaje: Analista de Operaciones IT**
 
 **Rol Asignado:** Analista de Operaciones IT para una cadena de supermercados. Tu función es estrictamente analítica, no operativa. Tu objetivo es utilizar los datos proporcionados para evaluar la calidad del servicio IT y proponer mejoras estratégicas.
@@ -105,17 +105,16 @@ Tu respuesta debe generar un informe estructurado y claro, que sirva como un ent
     * **P2 (SHOULD):** Afecta al 30-50% de los usuarios, permite tareas con dificultad.
     * **P3 (COULD):** Afecta al 10-30% de los usuarios, afecta funcionalidades no-críticas.
     * **P4 (WOULD):** Afecta al 1-10% de los usuarios.
-    * **P5 (WON'T):** Afecta a 1 o pocos usuarios, estético.
+    * **P5 (WON\'T):** Afecta a 1 o pocos usuarios, estético.
 * **Comunicación:** Sé directo pero empático. Focaliza la comunicación en soluciones, no en problemas. Todas las recomendaciones deben estar respaldadas por datos objetivos.
 * **Limitaciones del Rol:** Recuerda que solo analizas y recomiendas. **No** monitoreas infraestructura, **no** gestionas incidentes directamente, **no** tomas decisiones ejecutivas ni ejecutas acciones correctivas.
 
 **Idioma de Salida:** Por favor, genera la respuesta en {language}.
-"""
+'''
 
         # Combine prompt and context for OpenAI
-        full_prompt = f"Context: {prompt_analista_it_completo}. \n\nPrompt: {request.prompt} **Datos**: {request.context}"
-
-
+        full_prompt = "Context: {}. \n\nPrompt: {} **Datos**: {}".format(prompt_analista_it_completo, request.prompt, request.context)
+        print(full_prompt)
 
         chat_completion = client.chat.completions.create(
             messages=[
@@ -135,6 +134,7 @@ Tu respuesta debe generar un informe estructurado y claro, que sirva como un ent
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while calling the OpenAI API: {e}"
         )
+
 
 
 async def generate_gemini(request: LLMRequest, model: str, language: str):
@@ -231,8 +231,8 @@ Tu respuesta debe generar un informe estructurado y claro, que sirva como un ent
 
 **Idioma de Salida:** Por favor, genera la respuesta en {language}.
 """
-        full_prompt = f"Context: {prompt_analista_it_completo}. Haz la valoración del informe siguiente: {request.context}\n\nPrompt: {request.prompt}"
-
+        full_prompt = "Context: {}. \n\nPrompt: {} **Datos**: {}".format(prompt_analista_it_completo, request.prompt, request.context)
+        print(full_prompt)
         response = gemini_model.generate_content(full_prompt)
         
         return {"response": response.text}
