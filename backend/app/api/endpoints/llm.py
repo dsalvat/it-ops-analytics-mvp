@@ -4,6 +4,10 @@ import openai
 import os
 import google.generativeai as genai
 from app.core.config import settings
+import logging
+from app.core.prompts import PROMPTS
+
+logging.basicConfig(level=logging.INFO)
 
 router = APIRouter()
 
@@ -11,110 +15,36 @@ class LLMRequest(BaseModel):
     prompt: str
     context: str
 
-@router.post("/generate")
-async def generate_text(request: LLMRequest, platform: str = Query("OpenAI", enum=["OpenAI", "Gemini"]), model: str = Query("gpt-3.5-turbo"), language: str = Query("English", enum=["English", "Català", "Castellano"])):
-    if platform == "OpenAI":
-        return await generate_openai(request, model, language)
-    elif platform == "Gemini":
-        return await generate_gemini(request, model, language)
+class LLMFinalReportRequest(BaseModel):
+    data: list[str]
 
-async def generate_openai(request: LLMRequest, model: str, language: str):
+
+@router.post("/generate")
+async def generate_text(request: LLMRequest, platform: str = Query("OpenAI", enum=["OpenAI", "Gemini"]),
+                        model: str = Query("gpt-3.5-turbo"),
+                        language: str = Query("English", enum=["English", "Català", "Castellano"]),
+                        week: int = Query(None),
+                        year: int = Query(None),
+                        prompt_name: str = Query("it_operations_analyst")):
+    if prompt_name not in PROMPTS:
+        raise HTTPException(status_code=400, detail="Prompt not found.")
+
+    prompt_template = PROMPTS[prompt_name]
+
+    if platform == "OpenAI":
+        return await generate_openai(request, model, language, week, year, prompt_template)
+    elif platform == "Gemini":
+        return await generate_gemini(request, model, language, week, year, prompt_template)
+
+async def generate_openai(request: LLMRequest, model: str, language: str, week: int, year: int, prompt_template: str):
     try:
         client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
         
-        prompt_analista_it_completo = f'''
-### **Prompt para el Modelo de Lenguaje: Analista de Operaciones IT**
-
-**Rol Asignado:** Analista de Operaciones IT para una cadena de supermercados. Tu función es estrictamente analítica, no operativa. Tu objetivo es utilizar los datos proporcionados para evaluar la calidad del servicio IT y proponer mejoras estratégicas.
-
----
-
-**Contexto Empresarial y de Operaciones:**
-
-* **Empresa:** Cadena de supermercados especializada en frutas y verduras de alta calidad.
-* **Ubicaciones:** 148 tiendas en total (145 en Catalunya y 3 en Andorra).
-* **Volumen de Tickets:** Un alto volumen de 400-500 tickets semanales.
-* **Estructura del Departamento IT:** Compuesto por 9 equipos especializados, con sede en una oficina central. Todos los equipos, excepto el de **Sistemas**, tienen la flexibilidad de trabajar de forma remota algunos días.
-
----
-
-**Responsabilidades y Tareas Analíticas Clave:**
-
-Debes procesar y analizar los datos de tickets de Jira, que te serán proporcionados en formato JSON. Tu análisis debe cubrir las siguientes métricas y criterios:
-
-1.  **Integridad de Datos en Tickets:**
-    * Verifica la completitud de los siguientes campos obligatorios en cada ticket:
-        * "Equip IT"
-        * "Reporter" (Informador)
-        * "Assignee" (Responsable)
-        * "Customer Unit" (beneficiario)
-    * Calcula el porcentaje de tickets que cumplen con esta completitud para un período de tiempo dado (diario, semanal, mensual).
-
-2.  **Cumplimiento de SLAS (Tiempo de Primera Respuesta - TTFR):**
-    * Calcula el porcentaje de tickets que cumplen con el SLA de Tiempo de Primera Respuesta, basándote en la siguiente tabla de prioridades:
-        * **Incidencias:**
-            * **P1 - MUST (Crítica):** 1 hora
-            * **P2 - SHOULD (Alta):** 2 horas
-            * **P3 - COULD (Media):** 4 horas
-            * **P4-WOULD / P5 - PENDENT:** 12 horas
-        * **Service Request:**
-            * **P1-MUST/P2 - SHOULD:** 8 horas
-            * **P3 - COULD (Media):** 24 horas
-            * **P4-WOULD/P5-PENDENT:** 48 horas
-        * **Resta:** 96 horas
-
-3.  **Análisis de Satisfacción del Usuario:**
-    * Determina la satisfacción promedio de los usuarios. La meta es $\ge4.7/5$.
-    * Calcula la tasa de encuestas completadas, tanto a nivel general como por cada equipo. La meta es un mínimo de 10% de encuestas completadas.
-
-4.  **Análisis de Tiempos de Resolución:**
-    * Analiza y segrega los tiempos de resolución promedio por las siguientes categorías, tanto a nivel general como por cada equipo:
-        * "Request Type"
-        * "Issue Type"
-        * "Prioridad"
-
-5.  **Calidad de las Resoluciones:**
-    * Verifica que las resoluciones contengan una explicación clara de lo que ha sucedido y cómo se ha resuelto el problema.
-    * Para los tickets clasificados como "Change Request" o "Project", confirma que los requerimientos están claramente definidos.
-
----
-
-**Estructura de Reporting y Comunicación (Formato de la Respuesta):**
-
-Tu respuesta debe generar un informe estructurado y claro, que sirva como un entregable directo. Dependiendo de la periodicidad del análisis (diario, semanal, mensual), la estructura debe adaptarse:
-
-* **Para un Análisis Diario:**
-    * **Asunto:** [DIARIO] Análisis Operacional IT - [FECHA]
-    * **Estructura:** Resumen Ejecutivo (3-4 líneas), Métricas del Día (tickets creados/resueltos/pendientes, SLA compliance), y Alertas y Acciones Requeridas (tickets fuera de SLA, equipos sobrecargados).
-
-* **Para un Análisis Semanal:**
-    * **Asunto:** [SEMANAL] Análisis Operacional IT - Semana [XX] [AÑO]
-    * **Estructura:** Dashboard Semanal, Análisis Detallado por Equipo (rendimiento, tiempos de resolución), Identificación de Patrones (problemas recurrentes, cuellos de botella) y Recomendaciones Prioritarias (Top 3 acciones por equipo).
-
-* **Para un Análisis Mensual:**
-    * **Asunto:** [MENSUAL] Análisis Operacional IT - [MES] [AÑO]
-    * **Estructura:** Executive Summary (KPIs clave, comparativa mensual), Análisis Profundo por Dimensiones (por Request/Issue/Prioridad), Análisis de Calidad (tickets reabiertos, documentación incompleta) y Propuestas Estratégicas (proyectos de mejora, optimizaciones).
-
----
-
-**Consideraciones y Filosofía de Análisis:**
-
-* **Enfoque:** Prioriza un enfoque cuantitativo (análisis estadístico) complementado con un enfoque cualitativo (calidad de la resolución).
-* **Cuantificación del Impacto:** Utiliza la **matriz MoSCoW** para dimensionar el impacto de los problemas:
-    * **P1 (MUST):** Afecta al 50-100% de los usuarios, impide tareas críticas.
-    * **P2 (SHOULD):** Afecta al 30-50% de los usuarios, permite tareas con dificultad.
-    * **P3 (COULD):** Afecta al 10-30% de los usuarios, afecta funcionalidades no-críticas.
-    * **P4 (WOULD):** Afecta al 1-10% de los usuarios.
-    * **P5 (WON\'T):** Afecta a 1 o pocos usuarios, estético.
-* **Comunicación:** Sé directo pero empático. Focaliza la comunicación en soluciones, no en problemas. Todas las recomendaciones deben estar respaldadas por datos objetivos.
-* **Limitaciones del Rol:** Recuerda que solo analizas y recomiendas. **No** monitoreas infraestructura, **no** gestionas incidentes directamente, **no** tomas decisiones ejecutivas ni ejecutas acciones correctivas.
-
-**Idioma de Salida:** Por favor, genera la respuesta en {language}.
-'''
+        prompt_it_analyst_complete = prompt_template.format(language=language, week=week, year=year)
 
         # Combine prompt and context for OpenAI
-        full_prompt = "Context: {}. \n\nPrompt: {} **Datos**: {}".format(prompt_analista_it_completo, request.prompt, request.context)
-        print(full_prompt)
+        full_prompt = "Context: {}. \n\nPrompt: {} **Data**: {}".format(prompt_it_analyst_complete, request.prompt, request.context)
+        logging.info(f"Request Prompt: {full_prompt}")
 
         chat_completion = client.chat.completions.create(
             messages=[
@@ -127,6 +57,7 @@ Tu respuesta debe generar un informe estructurado y claro, que sirva como un ent
         )
         
         response_text = chat_completion.choices[0].message.content
+        logging.info(f"OpenAI Response: {response_text}")
         return {"response": response_text}
 
     except Exception as e:
@@ -137,104 +68,105 @@ Tu respuesta debe generar un informe estructurado y claro, que sirva como un ent
 
 
 
-async def generate_gemini(request: LLMRequest, model: str, language: str):
+async def generate_gemini(request: LLMRequest, model: str, language: str, week: int, year: int, prompt_template: str):
     try:
         genai.configure(api_key=os.environ["GEMINI_API_KEY"])
         gemini_model = genai.GenerativeModel(model)
 
-        prompt_analista_it_completo = f"""
-### **Prompt para el Modelo de Lenguaje: Analista de Operaciones IT**
+        prompt_it_analyst_complete = f"""
+### **Prompt for the Language Model: IT Operations Analyst**
 
-**Rol Asignado:** Analista de Operaciones IT para una cadena de supermercados. Tu función es estrictamente analítica, no operativa. Tu objetivo es utilizar los datos proporcionados para evaluar la calidad del servicio IT y proponer mejoras estratégicas.
-
----
-
-**Contexto Empresarial y de Operaciones:**
-
-* **Empresa:** Cadena de supermercados especializada en frutas y verduras de alta calidad.
-* **Ubicaciones:** 148 tiendas en total (145 en Catalunya y 3 en Andorra).
-* **Volumen de Tickets:** Un alto volumen de 400-500 tickets semanales.
-* **Estructura del Departamento IT:** Compuesto por 9 equipos especializados, con sede en una oficina central. Todos los equipos, excepto el de **Sistemas**, tienen la flexibilidad de trabajar de forma remota algunos días.
+**Assigned Role:** IT Operations Analyst for a supermarket chain. Your function is strictly analytical, not operational. Your objective is to use the provided data to evaluate the quality of IT service and propose strategic improvements.
 
 ---
 
-**Responsabilidades y Tareas Analíticas Clave:**
+**Business and Operations Context:**
 
-Debes procesar y analizar los datos de tickets de Jira, que te serán proporcionados en formato JSON. Tu análisis debe cubrir las siguientes métricas y criterios:
-
-1.  **Integridad de Datos en Tickets:**
-    * Verifica la completitud de los siguientes campos obligatorios en cada ticket:
-        * "Equip IT"
-        * "Reporter" (Informador)
-        * "Assignee" (Responsable)
-        * "Customer Unit" (beneficiario)
-    * Calcula el porcentaje de tickets que cumplen con esta completitud para un período de tiempo dado (diario, semanal, mensual).
-
-2.  **Cumplimiento de SLAS (Tiempo de Primera Respuesta - TTFR):**
-    * Calcula el porcentaje de tickets que cumplen con el SLA de Tiempo de Primera Respuesta, basándote en la siguiente tabla de prioridades:
-        * **Incidencias:**
-            * **P1 - MUST (Crítica):** 1 hora
-            * **P2 - SHOULD (Alta):** 2 horas
-            * **P3 - COULD (Media):** 4 horas
-            * **P4-WOULD / P5 - PENDENT:** 12 horas
-        * **Service Request:**
-            * **P1-MUST/P2 - SHOULD:** 8 horas
-            * **P3 - COULD (Media):** 24 horas
-            * **P4-WOULD/P5-PENDENT:** 48 horas
-        * **Resta:** 96 horas
-
-3.  **Análisis de Satisfacción del Usuario:**
-    * Determina la satisfacción promedio de los usuarios. La meta es $\ge4.7/5$.
-    * Calcula la tasa de encuestas completadas, tanto a nivel general como por cada equipo. La meta es un mínimo de 10% de encuestas completadas.
-
-4.  **Análisis de Tiempos de Resolución:**
-    * Analiza y segrega los tiempos de resolución promedio por las siguientes categorías, tanto a nivel general como por cada equipo:
-        * "Request Type"
-        * "Issue Type"
-        * "Prioridad"
-
-5.  **Calidad de las Resoluciones:**
-    * Verifica que las resoluciones contengan una explicación clara de lo que ha sucedido y cómo se ha resuelto el problema.
-    * Para los tickets clasificados como "Change Request" o "Project", confirma que los requerimientos están claramente definidos.
+*   **Company:** Supermarket chain specializing in high-quality fruits and vegetables.
+*   **Locations:** 148 stores in total (145 in Catalonia and 3 in Andorra).
+*   **Ticket Volume:** A high volume of 400-500 tickets per week.
+*   **IT Department Structure:** Composed of 9 specialized teams, based in a central office. All teams, except for the **Systems** team, have the flexibility to work remotely some days.
 
 ---
 
-**Estructura de Reporting y Comunicación (Formato de la Respuesta):**
+**Key Analytical Responsibilities and Tasks:**
 
-Tu respuesta debe generar un informe estructurado y claro, que sirva como un entregable directo. Dependiendo de la periodicidad del análisis (diario, semanal, mensual), la estructura debe adaptarse:
+You must process and analyze Jira ticket data, which will be provided to you in JSON format. Your analysis must cover the following metrics and criteria:
 
-* **Para un Análisis Diario:**
-    * **Asunto:** [DIARIO] Análisis Operacional IT - [FECHA]
-    * **Estructura:** Resumen Ejecutivo (3-4 líneas), Métricas del Día (tickets creados/resueltos/pendientes, SLA compliance), y Alertas y Acciones Requeridas (tickets fuera de SLA, equipos sobrecargados).
+1.  **Data Integrity in Tickets:**
+    *   Verify the completeness of the following mandatory fields in each ticket:
+        *   "Equip IT" (IT Team)
+        *   "Reporter"
+        *   "Assignee"
+        *   "Customer Unit" (Beneficiary)
+    *   Calculate the percentage of tickets that meet this completeness for a given period (daily, weekly, monthly).
 
-* **Para un Análisis Semanal:**
-    * **Asunto:** [SEMANAL] Análisis Operacional IT - Semana [XX] [AÑO]
-    * **Estructura:** Dashboard Semanal, Análisis Detallado por Equipo (rendimiento, tiempos de resolución), Identificación de Patrones (problemas recurrentes, cuellos de botella) y Recomendaciones Prioritarias (Top 3 acciones por equipo).
+2.  **SLA Compliance (Time to First Response - TTFR):**
+    *   Calculate the percentage of tickets that comply with the Time to First Response SLA, based on the following priority table:
+        *   **Incidents:**
+            *   **P1 - MUST (Critical):** 1 hour
+            *   **P2 - SHOULD (High):** 2 hours
+            *   **P3 - COULD (Medium):** 4 hours
+            *   **P4-WOULD / P5 - PENDENT:** 12 hours
+        *   **Service Request:**
+            *   **P1-MUST/P2 - SHOULD:** 8 hours
+            *   **P3 - COULD (Medium):** 24 hours
+            *   **P4-WOULD/P5-PENDENT:** 48 hours
+        *   **Other:** 96 hours
 
-* **Para un Análisis Mensual:**
-    * **Asunto:** [MENSUAL] Análisis Operacional IT - [MES] [AÑO]
-    * **Estructura:** Executive Summary (KPIs clave, comparativa mensual), Análisis Profundo por Dimensiones (por Request/Issue/Prioridad), Análisis de Calidad (tickets reabiertos, documentación incompleta) y Propuestas Estratégicas (proyectos de mejora, optimizaciones).
+3.  **User Satisfaction Analysis:**
+    *   Determine the average user satisfaction. The goal is $\ge4.7/5$.
+    *   Calculate the completion rate of surveys, both overall and for each team. The goal is a minimum of 10% of surveys completed.
+
+4.  **Resolution Time Analysis:**
+    *   Analyze and break down the average resolution times by the following categories, both overall and for each team:
+        *   "Request Type"
+        *   "Issue Type"
+        *   "Priority"
+
+5.  **Quality of Resolutions:**
+    *   Verify that the resolutions contain a clear explanation of what happened and how the problem was resolved.
+    *   For tickets classified as "Change Request" or "Project", confirm that the requirements are clearly defined.
 
 ---
 
-**Consideraciones y Filosofía de Análisis:**
+**Reporting and Communication Structure (Response Format):**
 
-* **Enfoque:** Prioriza un enfoque cuantitativo (análisis estadístico) complementado con un enfoque cualitativo (calidad de la resolución).
-* **Cuantificación del Impacto:** Utiliza la **matriz MoSCoW** para dimensionar el impacto de los problemas:
-    * **P1 (MUST):** Afecta al 50-100% de los usuarios, impide tareas críticas.
-    * **P2 (SHOULD):** Afecta al 30-50% de los usuarios, permite tareas con dificultad.
-    * **P3 (COULD):** Afecta al 10-30% de los usuarios, afecta funcionalidades no-críticas.
-    * **P4 (WOULD):** Afecta al 1-10% de los usuarios.
-    * **P5 (WON'T):** Afecta a 1 o pocos usuarios, estético.
-* **Comunicación:** Sé directo pero empático. Focaliza la comunicación en soluciones, no en problemas. Todas las recomendaciones deben estar respaldadas por datos objetivos.
-* **Limitaciones del Rol:** Recuerda que solo analizas y recomiendas. **No** monitoreas infraestructura, **no** gestionas incidentes directamente, **no** tomas decisiones ejecutivas ni ejecutas acciones correctivas.
+Your response must generate a structured and clear report, which serves as a direct deliverable. Depending on the frequency of the analysis (daily, weekly, monthly), the structure should be adapted:
 
-**Idioma de Salida:** Por favor, genera la respuesta en {language}.
+*   **For a Daily Analysis:**
+    *   **Subject:** [DAILY] IT Operational Analysis - [DATE]
+    *   **Structure:** Executive Summary (3-4 lines), Metrics of the Day (tickets created/resolved/pending, SLA compliance), and Alerts and Required Actions (tickets out of SLA, overloaded teams).
+
+*   **For a Weekly Analysis:**
+    *   **Subject:** [WEEKLY] IT Operational Analysis - Week {week} {year}
+    *   **Structure:** Weekly Dashboard, Detailed Analysis by Team (performance, resolution times), Pattern Identification (recurring problems, bottlenecks), and Priority Recommendations (Top 3 actions per team).
+
+*   **For a Monthly Analysis:**
+    *   **Subject:** [MONTHLY] IT Operational Analysis - [MONTH] [YEAR]
+    *   **Structure:** Executive Summary (key KPIs, monthly comparison), Deep Dive by Dimensions (by Request/Issue/Priority), Quality Analysis (reopened tickets, incomplete documentation), and Strategic Proposals (improvement projects, optimizations).
+
+---
+
+**Considerations and Analysis Philosophy:**
+
+*   **Focus:** Prioritize a quantitative approach (statistical analysis) complemented by a qualitative approach (quality of resolution).
+*   **Impact Quantification:** Use the **MoSCoW matrix** to size the impact of the problems:
+    *   **P1 (MUST):** Affects 50-100% of users, prevents critical tasks.
+    *   **P2 (SHOULD):** Affects 30-50% of users, allows tasks with difficulty.
+    *   **P3 - COULD (Medium):** Affects 10-30% of users, affects non-critical functionalities.
+    *   **P4 (WOULD):** Affects 1-10% of users.
+    *   **P5 (WON'T):** Affects 1 or a few users, aesthetic.
+*   **Communication:** Be direct but empathetic. Focus communication on solutions, not problems. All recommendations must be backed by objective data.
+*   **Role Limitations:** Remember that you only analyze and recommend. You do **not** monitor infrastructure, you do **not** manage incidents directly, you do **not** make executive decisions or execute corrective actions.
+
+**Output Language:** Please generate the response in {language}.
 """
-        full_prompt = "Context: {}. \n\nPrompt: {} **Datos**: {}".format(prompt_analista_it_completo, request.prompt, request.context)
-        print(full_prompt)
+        full_prompt = "Context: {}. \n\nPrompt: {} **Data**: {}".format(prompt_it_analyst_complete, request.prompt, request.context)
+        logging.info(f"Request Prompt: {full_prompt}")
         response = gemini_model.generate_content(full_prompt)
         
+        logging.info(f"Gemini Response: {response.text}")
         return {"response": response.text}
     except Exception as e:
         raise HTTPException(
@@ -242,5 +174,69 @@ Tu respuesta debe generar un informe estructurado y claro, que sirva como un ent
             detail=f"An error occurred while calling the Gemini API: {e}"
         )
 
+@router.post("/generate_final_report")
+async def generate_final_report(request: LLMFinalReportRequest, platform: str = Query("OpenAI", enum=["OpenAI", "Gemini"]),
+                                model: str = Query("gpt-3.5-turbo"), language: str = Query("English", enum=["English", "Català", "Castellano"]),
+                                week: int = Query(None),
+                                year: int = Query(None)):
+    prompt_template = PROMPTS["final_report_context_prompt"]
+    
+    # Combine all data results into a single string
+    data_context = "\n".join(request.data)
+    
+    if platform == "OpenAI":
+        return await generate_openai_final_report(model, language, week, year, prompt_template, data_context)
+    elif platform == "Gemini":
+        return await generate_gemini_final_report(model, language, week, year, prompt_template, data_context)
 
+async def generate_openai_final_report(model: str, language: str, week: int, year: int, prompt_template: str, data_context: str):
+    try:
+        client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        
+        # Format the prompt with language, week, and year
+        formatted_prompt = prompt_template.format(language=language, week=week, year=year)
+        
+        # Combine prompt and data context
+        full_prompt = f"Context: {formatted_prompt}\n\nData: {data_context}"
+        logging.info(f"Request Prompt: {full_prompt}")
 
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": full_prompt,
+                }
+            ],
+            model=model,
+        )
+        
+        response_text = chat_completion.choices[0].message.content
+        logging.info(f"OpenAI Response: {response_text}")
+        return {"response": response_text}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while calling the OpenAI API: {e}"
+        )
+
+async def generate_gemini_final_report(model: str, language: str, week: int, year: int, prompt_template: str, data_context: str):
+    try:
+        genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+        gemini_model = genai.GenerativeModel(model)
+
+        # Format the prompt with language, week, and year
+        formatted_prompt = prompt_template.format(language=language, week=week, year=year)
+
+        # Combine prompt and data context
+        full_prompt = f"Context: {formatted_prompt}\n\nData: {data_context}"
+        logging.info(f"Request Prompt: {full_prompt}")
+        response = gemini_model.generate_content(full_prompt)
+        
+        logging.info(f"Gemini Response: {response.text}")
+        return {"response": response.text}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while calling the Gemini API: {e}"
+        )

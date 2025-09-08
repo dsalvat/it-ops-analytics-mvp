@@ -10,6 +10,22 @@ function HomePage() {
   const [llmModel, setLlmModel] = useState({ platform: 'Gemini', model: 'gemini-1.5-flash-latest' });
   const [language, setLanguage] = useState('Català');
   const [isStopping, setIsStopping] = useState(false);
+  const [lastPrompt, setLastPrompt] = useState(null);
+
+  const getWeekOfYear = (date) => {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+    }
+    return 1 + Math.ceil((firstThursday - target) / 604800000);
+  }
+
+  const [week, setWeek] = useState(getWeekOfYear(new Date()));
+  const [year, setYear] = useState(new Date().getFullYear());
 
   // Function to check if all LLM results are filled
   const checkFinalReportButtonStatus = () => {
@@ -55,27 +71,16 @@ function HomePage() {
     setErrorFinalReport(null);
     setFinalReportResult(null);
 
-    const allLlmResults = reportsData.map(report => ({
-      reportName: report.name,
-      llmResult: report.llmResult,
-      eazybiResult: report.eazybiResult
-    }));
-
-    // You will provide the prompt for the final report here
-    const finalReportPrompt = "Summarize the following individual reports and provide overall recommendations:\n\n" +
-                             allLlmResults.map(item => `Report: ${item.reportName}\nAnalysis: ${item.llmResult}`).join('\n\n');
-
-    const finalReportContext = allLlmResults.map(item => `Report: ${item.reportName}\nData: ${JSON.stringify(item.eazybiResult)}`).join('\n\n');
+    const allLlmResults = reportsData.map(report => report.llmResult);
 
     try {
-      const llmResponse = await fetch(`http://localhost:8000/api/v1/llm/generate?platform=${llmModel.platform}&model=${llmModel.model}&language=${language}`, {
+      const llmResponse = await fetch(`http://localhost:8000/api/v1/llm/generate_final_report?platform=${llmModel.platform}&model=${llmModel.model}&language=${language}&week=${week}&year=${year}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: finalReportPrompt,
-          context: finalReportContext,
+          data: allLlmResults,
         }),
       });
       const llmData = await llmResponse.json();
@@ -138,6 +143,7 @@ function HomePage() {
 
   const handleCallLLM = async (index) => {
     const report = reportsData[index];
+    setLastPrompt(report.llmPrompt);
     setReportsData(prevReports => prevReports.map((r, i) =>
       i === index ? { ...r, loadingLlm: true, errorLlm: null, llmResult: null } : r
     ));
@@ -150,7 +156,7 @@ function HomePage() {
     }
 
     try {
-      const llmResponse = await fetch(`http://localhost:8000/api/v1/llm/generate?platform=${llmModel.platform}&model=${llmModel.model}&language=${language}`, {
+      const llmResponse = await fetch(`http://localhost:8000/api/v1/llm/generate?platform=${llmModel.platform}&model=${llmModel.model}&language=${language}&week=${week}&year=${year}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -296,6 +302,13 @@ function HomePage() {
           <option value="Català">Català</option>
           <option value="Castellano">Castellano</option>
         </select>
+        <select value={week} onChange={(e) => setWeek(e.target.value)} style={{ marginLeft: '10px', padding: '10px' }}>
+          {Array.from({ length: 52 }, (_, i) => i + 1).map(w => <option key={w} value={w}>Week {w}</option>)}
+        </select>
+        <select value={year} onChange={(e) => setYear(e.target.value)} style={{ marginLeft: '10px', padding: '10px' }}>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+        </select>
       </div>
 
       <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -401,6 +414,13 @@ function HomePage() {
 
         {errorFinalReport && (
           <p style={{ color: 'red', marginTop: '10px' }}>Error: {errorFinalReport}</p>
+        )}
+
+        {lastPrompt && (
+          <div style={{ marginTop: '20px', textAlign: 'left', border: '1px solid #ddd', padding: '15px', borderRadius: '8px', backgroundColor: '#f0f0f0' }}>
+            <h3>Last Prompt:</h3>
+            <pre>{lastPrompt}</pre>
+          </div>
         )}
       </div>
     </div>
