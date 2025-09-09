@@ -124,6 +124,31 @@ function HomePage() {
     }
   };
 
+  const handleSaveOrUpdateReport = async (reportToSave) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/eazybi/reports`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          week: week,
+          year: year,
+          report_id: reportToSave.report_id,
+          report_data: reportToSave.eazybiResult,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to save/update report: ${response.statusText}`);
+      }
+      console.log('Report saved/updated successfully!');
+      // Optionally, update the frontend state to reflect the saved status
+    } catch (error) {
+      console.error('Error saving/updating report:', error);
+      alert(`Error saving/updating report: ${error.message}`);
+    }
+  };
+
   const handleGetEazybiReport = async (index) => {
     const report = reportsData[index];
     setReportsData(prevReports => prevReports.map((r, i) =>
@@ -135,7 +160,7 @@ function HomePage() {
       const data = await response.json();
 
       if (response.ok) {
-        setReportsData(prevReports => prevReports.map((r, i) =>
+        const updatedReports = prevReports => prevReports.map((r, i) =>
           i === index ? {
             ...r,
             eazybiResult: data.result || data.detail || "No data found or unexpected format.",
@@ -143,7 +168,16 @@ function HomePage() {
             loadingEazybi: false,
             getReportTimestamp: new Date().toLocaleString(),
           } : r
-        ));
+        );
+        setReportsData(updatedReports);
+
+        // Automatically save/update the report after fetching
+        const fetchedReportData = {
+          report_id: report.report_id,
+          eazybiResult: data.result || data.detail || "No data found or unexpected format.",
+        };
+        await handleSaveOrUpdateReport(fetchedReportData);
+
         return true;
       } else {
         throw new Error(data.detail || "Failed to fetch Eazybi report");
@@ -361,6 +395,7 @@ function HomePage() {
             <th>Call LLM</th>
             <th>LLM Result</th>
             <th>Get Report and Call LLM</th>
+            <th>Actions</th> {/* New column header */}
           </tr>
         </thead>
         <tbody>
@@ -429,6 +464,14 @@ function HomePage() {
                   style={{ marginLeft: '10px' }}
                 >
                   Stop
+                </button>
+              </td>
+              <td> {/* New column for actions */}
+                <button
+                  onClick={() => handleSaveOrUpdateReport(report)}
+                  disabled={!report.eazybiResult || isProcessingAll}
+                >
+                  Save/Update
                 </button>
               </td>
             </tr>

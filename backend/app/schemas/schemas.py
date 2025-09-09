@@ -146,6 +146,7 @@ class AnalysisRequest(BaseModel):
 
 # EazyBI Reports
 class EazyBIReportBase(BaseModel):
+    report_id: str
     week: int
     year: int
     report_data: Optional[Dict[str, Any]] = None

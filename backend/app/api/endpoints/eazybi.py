@@ -67,6 +67,24 @@ async def delete_eazybi_config(report_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Report config not found")
     return db_config
 
+@router.post("/reports", response_model=schemas.EazyBIReport)
+async def save_eazybi_report(
+    eazybi_report_data: schemas.EazyBIReportCreate,
+    db: Session = Depends(get_db)
+):
+    db_report = crud.get_eazybi_report_by_week_year_report_id(
+        db,
+        week=eazybi_report_data.week,
+        year=eazybi_report_data.year,
+        report_id=eazybi_report_data.report_id
+    )
+    if db_report:
+        # Update existing report
+        return crud.update_eazybi_report(db, db_report, eazybi_report_data)
+    else:
+        # Create new report
+        return crud.create_eazybi_report(db, eazybi_report_data)
+
 @router.get("/eazybi-data")
 async def get_eazybi_data(db: Session = Depends(get_db), week: int = None, year: int = None):
     username = settings.EAZYBI_USERNAME
@@ -143,7 +161,7 @@ async def get_eazybi_data(db: Session = Depends(get_db), week: int = None, year:
                 if "query_results" in data:
                     report_data = data["query_results"]
                     
-                    eazybi_report_create = schemas.EazyBIReportCreate(week=week, year=year, report_data=report_data)
+                    eazybi_report_create = schemas.EazyBIReportCreate(week=week, year=year, report_id=report_id, report_data=report_data)
                     eazybi_report = crud.create_eazybi_report(db, eazybi_report_create)
 
                     analysis_result = schemas.AnalysisResultCreate(

@@ -51,8 +51,24 @@ def create_eazybi_report_config(db: Session, config: EazyBIReportConfigCreate):
     db.refresh(db_config)
     return db_config
 
+def get_eazybi_report_by_week_year_report_id(db: Session, week: int, year: int, report_id: str):
+    return db.query(EazyBIReport).filter(
+        EazyBIReport.week == week,
+        EazyBIReport.year == year,
+        EazyBIReport.report_id == report_id
+    ).first()
+
 def create_eazybi_report(db: Session, eazybi_report: EazyBIReportCreate):
     db_eazybi_report = EazyBIReport(**eazybi_report.model_dump())
+    db.add(db_eazybi_report)
+    db.commit()
+    db.refresh(db_eazybi_report)
+    return db_eazybi_report
+
+def update_eazybi_report(db: Session, db_eazybi_report: EazyBIReport, eazybi_report_update: EazyBIReportCreate):
+    update_data = eazybi_report_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_eazybi_report, key, value)
     db.add(db_eazybi_report)
     db.commit()
     db.refresh(db_eazybi_report)
