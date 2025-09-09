@@ -1,11 +1,9 @@
-from sqlalchemy import Column, Integer, String, Text, JSON, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Text, JSON, DateTime, ForeignKey, Enum, UniqueConstraint
 from sqlalchemy.types import DECIMAL as Decimal
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import enum
-
-Base = declarative_base()
+from app.core.database import Base
 
 class DataSourceType(str, enum.Enum):
     EAZYBI = "eazybi"
@@ -83,9 +81,13 @@ class Report(Base):
     __tablename__ = "reports"
     
     id = Column(Integer, primary_key=True, index=True)
+    week = Column(Integer, nullable=False)
+    year = Column(Integer, nullable=False)
     period_start = Column(DateTime)
     period_end = Column(DateTime)
     report_data = Column(JSON)
     recommendations = Column(JSON)
     status = Column(Enum("draft", "final", "sent", name="report_status"), default="draft")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (UniqueConstraint('week', 'year', name='_week_year_uc'),)

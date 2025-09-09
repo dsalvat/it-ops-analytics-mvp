@@ -1,26 +1,27 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 import openai
 import os
 import google.generativeai as genai
 from app.core.config import settings
 import logging
 from app.core.prompts import PROMPTS
+from app import crud, schemas
+from app.core.database import get_db
 
 logging.basicConfig(level=logging.INFO)
 
 router = APIRouter()
 
-class LLMRequest(BaseModel):
-    prompt: str
-    context: str
+
 
 class LLMFinalReportRequest(BaseModel):
     data: list[str]
 
-
 @router.post("/generate")
-async def generate_text(request: LLMRequest, platform: str = Query("OpenAI", enum=["OpenAI", "Gemini"]),
+async def generate_text(report_id: str = Query(...), prompt: str = Query(...), db: Session = Depends(get_db),
+                        platform: str = Query("OpenAI", enum=["OpenAI", "Gemini"]),
                         model: str = Query("gpt-3.5-turbo"),
                         language: str = Query("English", enum=["English", "Català", "Castellano"]),
                         week: int = Query(None),
@@ -31,19 +32,45 @@ async def generate_text(request: LLMRequest, platform: str = Query("OpenAI", enu
 
     prompt_template = PROMPTS[prompt_name]
 
-    if platform == "OpenAI":
-        return await generate_openai(request, model, language, week, year, prompt_template)
-    elif platform == "Gemini":
-        return await generate_gemini(request, model, language, week, year, prompt_template)
+    eazybi_analysis_result = crud.get_analysis_result(db, report_id=report_id, week=week, year=year, language='eazybi', model='eazybi')
+    if not eazybi_analysis_result or not eazybi_analysis_result.eazybi_report:
+        raise HTTPException(status_code=404, detail="EazyBI data not found for this report, week, and year.")
 
-async def generate_openai(request: LLMRequest, model: str, language: str, week: int, year: int, prompt_template: str):
+    context = eazybi_analysis_result.eazybi_report.report_data
+
+    if platform == "OpenAI":
+        response_text = await generate_openai(report_id, prompt, model, language, week, year, prompt_template, context)
+    elif platform == "Gemini":
+        response_text = await generate_gemini(report_id, prompt, model, language, week, year, prompt_template, context)
+
+    logging.info(f"LLM Response to be saved: {response_text}")
+
+    analysis_result = crud.get_analysis_result(db, report_id=report_id, week=week, year=year, language=language, model=model)
+
+    if analysis_result:
+        analysis_update = schemas.AnalysisResultUpdate(llm_response=response_text)
+        crud.update_analysis_result(db, db_analysis_result=analysis_result, analysis_result=analysis_update)
+    else:
+        analysis_create = schemas.AnalysisResultCreate(
+            report_id=report_id,
+            week=week,
+            year=year,
+            language=language,
+            model=model,
+            eazybi_report_id=eazybi_analysis_result.eazybi_report_id,
+            llm_response=response_text
+        )
+        crud.create_analysis_result(db, analysis_result=analysis_create)
+
+    return {"response": response_text}
+
+async def generate_openai(report_id: str, prompt: str, model: str, language: str, week: int, year: int, prompt_template: str, context: str):
     try:
         client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
         
         prompt_it_analyst_complete = prompt_template.format(language=language, week=week, year=year)
 
-        # Combine prompt and context for OpenAI
-        full_prompt = "Context: {}. \n\nPrompt: {} **Data**: {}".format(prompt_it_analyst_complete, request.prompt, request.context)
+        full_prompt = "Context: {}. \n\nPrompt: {} **Data**: {}".format(prompt_it_analyst_complete, prompt, context)
         logging.info(f"Request Prompt: {full_prompt}")
 
         chat_completion = client.chat.completions.create(
@@ -58,7 +85,7 @@ async def generate_openai(request: LLMRequest, model: str, language: str, week: 
         
         response_text = chat_completion.choices[0].message.content
         logging.info(f"OpenAI Response: {response_text}")
-        return {"response": response_text}
+        return response_text
 
     except Exception as e:
         raise HTTPException(
@@ -66,9 +93,7 @@ async def generate_openai(request: LLMRequest, model: str, language: str, week: 
             detail=f"An error occurred while calling the OpenAI API: {e}"
         )
 
-
-
-async def generate_gemini(request: LLMRequest, model: str, language: str, week: int, year: int, prompt_template: str):
+async def generate_gemini(report_id: str, prompt: str, model: str, language: str, week: int, year: int, prompt_template: str, context: str):
     try:
         genai.configure(api_key=os.environ["GEMINI_API_KEY"])
         gemini_model = genai.GenerativeModel(model)
@@ -162,12 +187,12 @@ Your response must generate a structured and clear report, which serves as a dir
 
 **Output Language:** Please generate the response in {language}.
 """
-        full_prompt = "Context: {}. \n\nPrompt: {} **Data**: {}".format(prompt_it_analyst_complete, request.prompt, request.context)
+        full_prompt = "Context: {}. \n\nPrompt: {} **Data**: {}".format(prompt_it_analyst_complete, prompt, context)
         logging.info(f"Request Prompt: {full_prompt}")
         response = gemini_model.generate_content(full_prompt)
         
         logging.info(f"Gemini Response: {response.text}")
-        return {"response": response.text}
+        return response.text
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -175,28 +200,45 @@ Your response must generate a structured and clear report, which serves as a dir
         )
 
 @router.post("/generate_final_report")
-async def generate_final_report(request: LLMFinalReportRequest, platform: str = Query("OpenAI", enum=["OpenAI", "Gemini"]),
+async def generate_final_report(request: LLMFinalReportRequest, db: Session = Depends(get_db),
+                                platform: str = Query("OpenAI", enum=["OpenAI", "Gemini"]),
                                 model: str = Query("gpt-3.5-turbo"), language: str = Query("English", enum=["English", "Català", "Castellano"]),
                                 week: int = Query(None),
                                 year: int = Query(None)):
     prompt_template = PROMPTS["final_report_context_prompt"]
     
-    # Combine all data results into a single string
     data_context = "\n".join(request.data)
     
     if platform == "OpenAI":
-        return await generate_openai_final_report(model, language, week, year, prompt_template, data_context)
+        response_text = await generate_openai_final_report(model, language, week, year, prompt_template, data_context)
     elif platform == "Gemini":
-        return await generate_gemini_final_report(model, language, week, year, prompt_template, data_context)
+        response_text = await generate_gemini_final_report(model, language, week, year, prompt_template, data_context)
+
+    # Check if a final report already exists for this week and year
+    existing_report = crud.get_report_by_week_year(db, week=week, year=year)
+
+    if existing_report:
+        # Update the existing report
+        report_update = schemas.ReportUpdate(report_data=response_text, status="final")
+        crud.update_report(db, db_report=existing_report, report=report_update)
+    else:
+        # Create a new final report
+        report_create = schemas.ReportCreate(
+            week=week,
+            year=year,
+            report_data=response_text,
+            status="final"
+        )
+        crud.create_report(db, report=report_create)
+
+    return {"response": response_text}
 
 async def generate_openai_final_report(model: str, language: str, week: int, year: int, prompt_template: str, data_context: str):
     try:
         client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
         
-        # Format the prompt with language, week, and year
         formatted_prompt = prompt_template.format(language=language, week=week, year=year)
         
-        # Combine prompt and data context
         full_prompt = f"Context: {formatted_prompt}\n\nData: {data_context}"
         logging.info(f"Request Prompt: {full_prompt}")
 
@@ -212,7 +254,7 @@ async def generate_openai_final_report(model: str, language: str, week: int, yea
         
         response_text = chat_completion.choices[0].message.content
         logging.info(f"OpenAI Response: {response_text}")
-        return {"response": response_text}
+        return response_text
 
     except Exception as e:
         raise HTTPException(
@@ -225,16 +267,14 @@ async def generate_gemini_final_report(model: str, language: str, week: int, yea
         genai.configure(api_key=os.environ["GEMINI_API_KEY"])
         gemini_model = genai.GenerativeModel(model)
 
-        # Format the prompt with language, week, and year
         formatted_prompt = prompt_template.format(language=language, week=week, year=year)
 
-        # Combine prompt and data context
         full_prompt = f"Context: {formatted_prompt}\n\nData: {data_context}"
         logging.info(f"Request Prompt: {full_prompt}")
         response = gemini_model.generate_content(full_prompt)
         
         logging.info(f"Gemini Response: {response.text}")
-        return {"response": response.text}
+        return response.text
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

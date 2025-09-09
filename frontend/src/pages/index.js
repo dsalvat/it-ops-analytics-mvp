@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 function HomePage() {
   const [reportsData, setReportsData] = useState([]);
@@ -36,30 +38,55 @@ function HomePage() {
   };
 
   useEffect(() => {
-    const fetchConfig = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/v1/eazybi/config');
-        const config = await response.json();
-        setReportsData(config.map(report => ({
-          ...report,
-          eazybiResult: null,
-          llmPrompt: report.llm_analysis_call || '',
-          llmResult: null,
-          loadingEazybi: false,
-          loadingLlm: false,
-          errorEazybi: null,
-          errorLlm: null,
-          getReportTimestamp: null,
-          callLlmTimestamp: null,
-          stopping: false,
-        })));
-      } catch (error) {
-        console.error("Error fetching Eazybi config:", error);
-      }
+    const fetchAndMergeData = async () => {
+      // 1. Fetch EazyBI data for the selected week and year
+      // try {
+      //   await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/eazybi/eazybi-data?week=${week}&year=${year}`);
+      // } catch (error) {
+      //   console.error("Error fetching EazyBI data:", error);
+      // }
+
+      // 2. Fetch base config
+      const configResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/eazybi/config`);
+      const config = await configResponse.json();
+      let reports = config.map(report => ({
+        ...report,
+        report_id: String(report.report_id), // Ensure report_id is a string
+        eazybiResult: null,
+        llmPrompt: report.llm_analysis_call || '',
+        llmResult: null,
+        loadingEazybi: false,
+        loadingLlm: false,
+        errorEazybi: null,
+        errorLlm: null,
+        getReportTimestamp: null,
+        callLlmTimestamp: null,
+        stopping: false,
+      }));
+
+      // 3. Fetch saved analysis data
+      // try {
+      //   const analysisResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/analysis/all/?week=${week}&year=${year}&language=${language}&model=${llmModel.model}`);
+      //   if (analysisResponse.ok) {
+      //     const savedResults = await analysisResponse.json();
+      //     if (savedResults.length > 0) {
+      //       const resultsMap = new Map(savedResults.map(r => [r.report_id, r]));
+      //       reports = reports.map(report => {
+      //         const saved = resultsMap.get(report.report_id);
+      //         return saved ? { ...report, eazybiResult: saved.eazybi_data, llmResult: saved.llm_response } : report;
+      //       });
+      //     }
+      //   }
+      // } catch (error) {
+      //   console.error("Error fetching analysis data:", error);
+      // }
+      
+      setReportsData(reports);
+      setFinalReportResult(null); // Reset final report when filters change
     };
 
-    fetchConfig();
-  }, []); // Empty dependency array means this runs once on mount
+    fetchAndMergeData();
+  }, [week, year, language, llmModel]);
 
   // Effect to re-check button status whenever reportsData changes
   useEffect(() => {
@@ -74,7 +101,7 @@ function HomePage() {
     const allLlmResults = reportsData.map(report => report.llmResult);
 
     try {
-      const llmResponse = await fetch(`http://localhost:8000/api/v1/llm/generate_final_report?platform=${llmModel.platform}&model=${llmModel.model}&language=${language}&week=${week}&year=${year}`, {
+      const llmResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/llm/generate_final_report?platform=${llmModel.platform}&model=${llmModel.model}&language=${language}&week=${week}&year=${year}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +131,7 @@ function HomePage() {
     ));
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/eazybi/report/${report.report_id}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/eazybi/report/${report.report_id}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -156,28 +183,31 @@ function HomePage() {
     }
 
     try {
-      const llmResponse = await fetch(`http://localhost:8000/api/v1/llm/generate?platform=${llmModel.platform}&model=${llmModel.model}&language=${language}&week=${week}&year=${year}`, {
+      const llmResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/llm/generate?platform=${llmModel.platform}&model=${llmModel.model}&language=${language}&week=${week}&year=${year}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          report_id: report.report_id,
           prompt: report.llmPrompt,
-          context: JSON.stringify(report.eazybiResult), // Ensure context is a string
         }),
       });
       const llmData = await llmResponse.json();
 
       if (llmResponse.ok) {
-        setReportsData(prevReports => prevReports.map((r, i) =>
-          i === index ? {
-            ...r,
-            llmResult: llmData.response || llmData.detail || "No LLM response.",
-            errorLlm: llmData.detail ? llmData.detail : null,
-            loadingLlm: false,
-            callLlmTimestamp: `${new Date().toLocaleString()} (Model: ${llmModel.model})`,
-          } : r
-        ));
+        const newLlmResult = llmData.response || llmData.detail || "No LLM response.";
+        
+        const updatedReport = {
+          ...report,
+          llmResult: newLlmResult,
+          errorLlm: llmData.detail ? llmData.detail : null,
+          loadingLlm: false,
+          callLlmTimestamp: `${new Date().toLocaleString()} (Model: ${llmModel.model})`,
+        };
+
+        setReportsData(prevReports => prevReports.map((r, i) => i === index ? updatedReport : r));
+
         return true;
       } else {
         throw new Error(llmData.detail || "Failed to call LLM");
@@ -240,6 +270,15 @@ function HomePage() {
     }
 
     setIsProcessingAll(false);
+  };
+
+  const handleExportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(reportsData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Reports");
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(data, 'reports.xlsx');
   };
 
   const handleGetReportAndCallLLM = async (index) => {
@@ -403,6 +442,12 @@ function HomePage() {
           disabled={!isFinalReportButtonEnabled || loadingFinalReport || isProcessingAll}
         >
           {loadingFinalReport ? 'Generating Final Report...' : 'Final Weekly Report'}
+        </button>
+        <button
+          onClick={handleExportToExcel}
+          style={{ marginLeft: '10px' }}
+        >
+          Export to Excel
         </button>
 
         {finalReportResult && (

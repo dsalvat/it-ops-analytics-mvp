@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.database import engine
 from app.models import models
-from app.api.endpoints import data_extraction, eazybi, llm
+from app.api.endpoints import data_extraction, eazybi, llm, analysis
 from app.api.dependencies import get_current_user
 
 # Configure logging
@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 MAX_RETRIES = 5
-RETRY_DELAY = 5  # seconds
+RETRY_DELAY = 10  # seconds
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -79,6 +79,11 @@ app.include_router(
     llm.router, 
     prefix=f"{settings.API_V1_STR}/llm", 
     tags=["llm"]
+)
+app.include_router(
+    analysis.router, 
+    prefix=f"{settings.API_V1_STR}", 
+    tags=["analysis"]
 )
 
 

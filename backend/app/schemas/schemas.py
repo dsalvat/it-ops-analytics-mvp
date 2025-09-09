@@ -88,8 +88,10 @@ class UserInsight(UserInsightBase):
 
 # Reports
 class ReportBase(BaseModel):
-    period_start: datetime
-    period_end: datetime
+    week: int
+    year: int
+    period_start: Optional[datetime] = None
+    period_end: Optional[datetime] = None
     report_data: Optional[Dict[str, Any]] = None
     recommendations: Optional[Dict[str, Any]] = None
 
@@ -98,11 +100,22 @@ class ReportCreate(ReportBase):
 
 class Report(ReportBase):
     id: int
+    week: int
+    year: int
     status: str
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+class ReportUpdate(BaseModel):
+    week: Optional[int] = None
+    year: Optional[int] = None
+    period_start: Optional[datetime] = None
+    period_end: Optional[datetime] = None
+    report_data: Optional[Dict[str, Any]] = None
+    recommendations: Optional[Dict[str, Any]] = None
+    status: Optional[str] = None
 
 # Specific schemas for API responses
 class SLAOverview(BaseModel):
@@ -130,3 +143,73 @@ class AnalysisRequest(BaseModel):
     data_type: str = Field(..., description="Type of analysis: sla, tickets, satisfaction")
     time_period: Optional[str] = Field(default="last_week", description="Time period for analysis")
     include_recommendations: bool = Field(default=True, description="Include AI recommendations")
+
+# EazyBI Reports
+class EazyBIReportBase(BaseModel):
+    week: int
+    year: int
+    report_data: Optional[Dict[str, Any]] = None
+
+class EazyBIReportCreate(EazyBIReportBase):
+    pass
+
+class EazyBIReport(EazyBIReportBase):
+    id: int
+    week: int
+    year: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Analysis Results
+class AnalysisResultBase(BaseModel):
+    report_id: str
+    week: int
+    year: int
+    language: str
+    model: str
+    eazybi_report_id: Optional[int] = None
+    llm_response: Optional[Any] = None
+
+class AnalysisResultCreate(AnalysisResultBase):
+    pass
+
+class AnalysisResultUpdate(BaseModel):
+    report_id: Optional[str] = None
+    week: Optional[int] = None
+    year: Optional[int] = None
+    language: Optional[str] = None
+    model: Optional[str] = None
+    eazybi_report_id: Optional[int] = None
+    llm_response: Optional[Any] = None
+
+class AnalysisResult(AnalysisResultBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    eazybi_report: Optional[EazyBIReport] = None
+
+    class Config:
+        from_attributes = True
+
+# EazyBI Report Config
+class EazyBIReportConfigBase(BaseModel):
+    report_id: str
+    name: str
+    llm_analysis_call: Optional[str] = None
+
+class EazyBIReportConfigCreate(EazyBIReportConfigBase):
+    pass
+
+class EazyBIReportConfigUpdate(EazyBIReportConfigBase):
+    pass
+
+class EazyBIReportConfig(EazyBIReportConfigBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
